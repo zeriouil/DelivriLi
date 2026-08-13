@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { Store, ArrowRight, Loader2, MapPin, Phone, Building2 } from "lucide-react";
+import { Store, ArrowRight, Loader2, MapPin, Phone, Building2, Image as ImageIcon, AlignLeft } from "lucide-react";
 import Link from "next/link";
 
 export default function SignupPage() {
@@ -16,6 +16,9 @@ export default function SignupPage() {
     slug: "",
     phone_number: "",
     address: "",
+    description: "",
+    logo_url: "",
+    cover_image_url: "",
     delivery_fee: "15",
     min_order_amount: "50",
   });
@@ -62,6 +65,9 @@ export default function SignupPage() {
         id: restaurantId,
         slug: formData.slug,
         name: formData.name,
+        description: formData.description,
+        logo_url: formData.logo_url,
+        cover_image_url: formData.cover_image_url,
         phone_number: formData.phone_number,
         address: formData.address,
         currency_code: "MAD",
@@ -170,6 +176,49 @@ export default function SignupPage() {
                     className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition-all font-medium text-slate-700"
                     placeholder="City, Street..."
                   />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1.5">Description</label>
+                <div className="relative">
+                  <AlignLeft className="w-5 h-5 text-slate-400 absolute left-3 top-3" />
+                  <textarea
+                    rows={3}
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition-all font-medium text-slate-700"
+                    placeholder="Tell customers about your restaurant..."
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1.5">Logo Image URL</label>
+                  <div className="relative">
+                    <ImageIcon className="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="url"
+                      value={formData.logo_url}
+                      onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
+                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition-all font-medium text-slate-700"
+                      placeholder="https://..."
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1.5">Cover Image URL</label>
+                  <div className="relative">
+                    <ImageIcon className="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="url"
+                      value={formData.cover_image_url}
+                      onChange={(e) => setFormData({ ...formData, cover_image_url: e.target.value })}
+                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition-all font-medium text-slate-700"
+                      placeholder="https://..."
+                    />
+                  </div>
                 </div>
               </div>
 

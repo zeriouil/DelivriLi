@@ -2,7 +2,9 @@ export interface Restaurant {
   id: string;
   slug: string;
   name: string;
+  description?: string;
   logo_url?: string;
+  cover_image_url?: string;
   phone_number: string; // e.g. "212612345678"
   currency_code: string; // 'MAD'
   currency_symbol: string; // 'DH'

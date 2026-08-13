@@ -109,9 +109,9 @@ export default function MarketplacePage() {
               >
                 {/* Image Placeholder */}
                 <div className="w-full h-48 bg-slate-100 relative overflow-hidden">
-                  {restaurant.logo_url ? (
+                  {restaurant.cover_image_url || restaurant.logo_url ? (
                     <img
-                      src={restaurant.logo_url}
+                      src={restaurant.cover_image_url || restaurant.logo_url}
                       alt={restaurant.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
@@ -143,6 +143,12 @@ export default function MarketplacePage() {
                       <span className="text-xs font-bold text-slate-700">4.8</span>
                     </div>
                   </div>
+
+                  {restaurant.description && (
+                    <p className="text-slate-500 text-sm line-clamp-2 mb-3 leading-relaxed">
+                      {restaurant.description}
+                    </p>
+                  )}
 
                   <p className="text-slate-500 text-sm flex items-center gap-1.5 mb-4 line-clamp-1">
                     <MapPin className="w-4 h-4" />

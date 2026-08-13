@@ -135,12 +135,20 @@ export default function CustomerMenuPage({ params }: { params: { restaurantSlug:
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 pb-28 font-[Outfit]">
       {/* ── Hero Header ─────────────────────────────── */}
-      <header className="relative overflow-hidden bg-gradient-to-br from-emerald-700 via-emerald-600 to-teal-500 text-white pt-10 pb-8 px-4 rounded-b-[2rem] shadow-xl">
-        {/* Animated blobs */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="animate-blob absolute -top-10 -right-10 w-52 h-52 rounded-full bg-teal-400/30 blur-3xl" />
-          <div className="animate-blob absolute bottom-0 -left-12 w-44 h-44 rounded-full bg-emerald-900/40 blur-2xl" style={{ animationDelay: '-3s' }} />
-        </div>
+      <header 
+        className="relative overflow-hidden bg-gradient-to-br from-emerald-700 via-emerald-600 to-teal-500 text-white pt-10 pb-8 px-4 rounded-b-[2rem] shadow-xl"
+        style={restaurant.cover_image_url ? { backgroundImage: `url(${restaurant.cover_image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
+      >
+        {/* Dark Overlay for readability when using image */}
+        {restaurant.cover_image_url && <div className="absolute inset-0 bg-black/50 z-0"></div>}
+
+        {/* Animated blobs (hide if using image) */}
+        {!restaurant.cover_image_url && (
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <div className="animate-blob absolute -top-10 -right-10 w-52 h-52 rounded-full bg-teal-400/30 blur-3xl" />
+            <div className="animate-blob absolute bottom-0 -left-12 w-44 h-44 rounded-full bg-emerald-900/40 blur-2xl" style={{ animationDelay: '-3s' }} />
+          </div>
+        )}
 
         <div className="relative z-10 max-w-md mx-auto">
           {/* Logo + Info */}
@@ -154,7 +162,12 @@ export default function CustomerMenuPage({ params }: { params: { restaurantSlug:
             )}
             <div className="flex-1 min-w-0">
               <h1 className="text-2xl font-black tracking-tight truncate">{restaurant.name}</h1>
-              <p className="text-emerald-100 text-xs flex items-center gap-1 mt-0.5">
+              {restaurant.description && (
+                <p className="text-emerald-50 text-sm mt-1 line-clamp-2 leading-tight">
+                  {restaurant.description}
+                </p>
+              )}
+              <p className="text-emerald-100/80 text-xs flex items-center gap-1 mt-1.5">
                 <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
                 <span className="truncate">{restaurant.address || 'Casablanca, Morocco'}</span>
               </p>

@@ -8,7 +8,9 @@ CREATE TABLE IF NOT EXISTS public.restaurants (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     slug TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL,
+    description TEXT,
     logo_url TEXT,
+    cover_image_url TEXT,
     phone_number TEXT NOT NULL,
     currency_code TEXT DEFAULT 'MAD',
     currency_symbol TEXT DEFAULT 'DH',
@@ -80,3 +82,9 @@ CREATE POLICY "Allow public delete menu_items" ON public.menu_items FOR DELETE U
 
 DROP POLICY IF EXISTS "Allow public delete categories" ON public.categories;
 CREATE POLICY "Allow public delete categories" ON public.categories FOR DELETE USING (true);
+
+-- ==========================================
+-- UPDATE EXISTING TABLE (Run these if the table already exists!)
+-- ==========================================
+ALTER TABLE public.restaurants ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE public.restaurants ADD COLUMN IF NOT EXISTS cover_image_url TEXT;
