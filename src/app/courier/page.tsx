@@ -401,47 +401,69 @@ export default function CourierDashboard() {
         ))}
       </div>
 
-      {/* Bottom jobs panel */}
-      <div
-        className={`absolute left-0 right-0 z-20 transition-all duration-500 ease-out ${
-          jobListOpen ? "bottom-0" : "-bottom-[calc(100vh-160px)]"
-        }`}
-        style={{ top: jobListOpen ? "30%" : undefined }}
-      >
-        <button
-          onClick={() => setJobListOpen((v) => !v)}
-          className="w-full flex items-center justify-between bg-slate-900/90 backdrop-blur-xl border-t border-white/10 px-6 py-4 rounded-t-3xl"
+      {/* Bottom jobs panel — only shown when there are active deliveries */}
+      {readyDeliveries.length > 0 && (
+        <div
+          className={`absolute left-0 right-0 z-20 transition-all duration-500 ease-out ${
+            jobListOpen ? "bottom-0" : "-bottom-[calc(100vh-160px)]"
+          }`}
+          style={{ top: jobListOpen ? "30%" : undefined }}
         >
-          <div className="flex items-center gap-3">
-            <span className="text-white font-black text-base">Active Jobs</span>
-            {readyDeliveries.length > 0 && (
+          <button
+            onClick={() => setJobListOpen((v) => !v)}
+            className="w-full flex items-center justify-between bg-slate-900/90 backdrop-blur-xl border-t border-white/10 px-6 py-4 rounded-t-3xl"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-white font-black text-base">Active Jobs</span>
               <span className="bg-red-500 text-white text-xs font-black px-2.5 py-0.5 rounded-full animate-pulse">
                 {readyDeliveries.length}
               </span>
-            )}
-          </div>
-          {jobListOpen ? <X className="w-5 h-5 text-white/60" /> : <ChevronUp className="w-5 h-5 text-white/60" />}
-        </button>
-        <div className="bg-slate-900/95 backdrop-blur-xl overflow-y-auto px-4 pb-10 space-y-4" style={{ maxHeight: "70vh" }}>
-          {readyDeliveries.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-2xl mb-2">🛵</p>
-              <p className="text-white/60 font-medium">Waiting for new jobs…</p>
-              <p className="text-white/30 text-sm mt-1">Orders will appear here when ready</p>
             </div>
-          ) : (
-            readyDeliveries.map((order) => (
-              <DeliveryJobCard key={order.id} order={order} onUpdateStatus={handleUpdateStatus} />
-            ))
-          )}
+            {jobListOpen ? <X className="w-5 h-5 text-white/60" /> : <ChevronUp className="w-5 h-5 text-white/60" />}
+          </button>
+          <div className="bg-slate-900/95 backdrop-blur-xl overflow-y-auto px-4 pb-10 space-y-4" style={{ maxHeight: "70vh" }}>
+            {readyDeliveries.map((order) => (
+              <DeliveryJobCard key={order.id} order={order} onUpdateStatus={handleUpdateStatus} courierPosition={courierPos} />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Collapsed jobs FAB */}
+      {/* Waiting indicator — shown at bottom when online but no active jobs */}
+      {readyDeliveries.length === 0 && (
+        <div className="absolute bottom-0 left-0 right-0 z-20 px-4 pb-8 pt-4 bg-gradient-to-t from-slate-950/80 to-transparent pointer-events-none">
+          <div className="flex items-center justify-center gap-3 bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-2xl px-5 py-3.5 pointer-events-auto">
+            {isOnline ? (
+              <>
+                <div className="w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                <span className="text-white/80 text-sm font-semibold">Waiting for orders…</span>
+              </>
+            ) : (
+              <>
+                <WifiOff className="w-4 h-4 text-white/30 flex-shrink-0" />
+                <span className="text-white/30 text-sm font-semibold">You are offline</span>
+              </>
+            )}
+            <button
+              onClick={() => setIsOnline((v) => !v)}
+              className={`ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+                isOnline
+                  ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300 hover:bg-red-500/20 hover:border-red-400/40 hover:text-red-300'
+                  : 'bg-slate-700/60 border-white/10 text-white/40 hover:bg-emerald-500/20 hover:border-emerald-400/40 hover:text-emerald-300'
+              }`}
+            >
+              {isOnline ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}
+              {isOnline ? 'Go Offline' : 'Go Online'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Collapsed jobs FAB — shown when jobs exist but panel is closed */}
       {!jobListOpen && readyDeliveries.length > 0 && (
         <button
           onClick={() => setJobListOpen(true)}
-          className="absolute bottom-28 right-4 z-30 bg-red-500 hover:bg-red-400 text-white font-black rounded-2xl px-5 py-3.5 shadow-xl shadow-red-500/40 flex items-center gap-2 active:scale-95 transition-all"
+          className="absolute bottom-8 right-4 z-30 bg-red-500 hover:bg-red-400 text-white font-black rounded-2xl px-5 py-3.5 shadow-xl shadow-red-500/40 flex items-center gap-2 active:scale-95 transition-all"
         >
           <ChevronUp className="w-5 h-5" />
           {readyDeliveries.length} Job{readyDeliveries.length > 1 ? "s" : ""}
