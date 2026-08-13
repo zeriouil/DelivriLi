@@ -1,23 +1,45 @@
-export const dynamic = "force-dynamic";
+"use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { Restaurant, MenuItem } from "@/types";
-import { Search, MapPin, Star, ArrowRight, Store, ArrowUpRight, Flame, Utensils } from "lucide-react";
+import { Search, MapPin, Star, ArrowRight, Store, ArrowUpRight, Flame, Utensils, Loader2 } from "lucide-react";
 
-export default async function MarketplacePage() {
-  // Fetch active restaurants from Supabase
-  const { data: restaurants } = await supabase
-    .from("restaurants")
-    .select("*")
-    .eq("is_active", true)
-    .order("name");
+export default function MarketplacePage() {
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Fetch some popular/active menu items to show as previews
-  const { data: menuItems } = await supabase
-    .from("menu_items")
-    .select("*")
-    .eq("is_available", true);
+  useEffect(() => {
+    async function fetchData() {
+      // Fetch active restaurants from Supabase
+      const { data: rData } = await supabase
+        .from("restaurants")
+        .select("*")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false }); // Show newest first
+
+      // Fetch some popular/active menu items to show as previews
+      const { data: mData } = await supabase
+        .from("menu_items")
+        .select("*")
+        .eq("is_available", true);
+
+      if (rData) setRestaurants(rData);
+      if (mData) setMenuItems(mData);
+      setLoading(false);
+    }
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 font-[Outfit]">
