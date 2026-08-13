@@ -97,8 +97,8 @@ export function LiveTrackingMap({ deliveryAddress, orderStatus }: LiveTrackingMa
       delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
 
       const destCoords = await geocodeAddress(deliveryAddress);
-      destCoordsRef.current = destCoords;
-      const center = destCoords ?? [33.5731, -7.5898];
+      const center: [number, number] = destCoords ?? [33.5731, -7.5898];
+      destCoordsRef.current = center;
 
       const map = L.map(containerRef.current, {
         zoomControl: false,
@@ -163,21 +163,19 @@ export function LiveTrackingMap({ deliveryAddress, orderStatus }: LiveTrackingMa
       courierMarkerRef.current = marker;
 
       // Draw initial route
-      if (destCoords) {
-        routeLineRef.current = L.polyline([initialCourierPos, destCoords], {
-          color: "#6366f1", weight: 4, opacity: 0.8, dashArray: "10 8", lineCap: "round"
-        }).addTo(map);
+      routeLineRef.current = L.polyline([initialCourierPos, center], {
+        color: "#6366f1", weight: 4, opacity: 0.8, dashArray: "10 8", lineCap: "round"
+      }).addTo(map);
 
-        fetchRoute(initialCourierPos, destCoords).then(route => {
-          if (route && routeLineRef.current && !destroyed) {
-            routeLineRef.current.setLatLngs(route);
-            routeLineRef.current.setStyle({ dashArray: "", color: "#4f46e5" }); // Solid line for real route
-            map.fitBounds(routeLineRef.current.getBounds(), { padding: [50, 50] });
-          } else if (!destroyed) {
-            map.fitBounds([initialCourierPos, destCoords], { padding: [50, 50] });
-          }
-        });
-      }
+      fetchRoute(initialCourierPos, center).then(route => {
+        if (route && routeLineRef.current && !destroyed) {
+          routeLineRef.current.setLatLngs(route);
+          routeLineRef.current.setStyle({ dashArray: "0", color: "#4f46e5" }); // Solid line for real route
+          map.fitBounds(routeLineRef.current.getBounds(), { padding: [50, 50] });
+        } else if (!destroyed) {
+          map.fitBounds([initialCourierPos, center], { padding: [50, 50] });
+        }
+      });
     };
 
     buildMap();
@@ -251,12 +249,19 @@ export function LiveTrackingMap({ deliveryAddress, orderStatus }: LiveTrackingMa
           fetchRoute(latlng, targetCoords).then(route => {
             if (route && routeLineRef.current) {
               routeLineRef.current.setLatLngs(route);
-              routeLineRef.current.setStyle({ dashArray: "", color: "#4f46e5" });
+              routeLineRef.current.setStyle({ dashArray: "0", color: "#4f46e5" });
             }
           });
-        } else if (routeLineRef.current && (!routeLineRef.current.getLatLngs() || (routeLineRef.current.getLatLngs() as any).length <= 2)) {
-          // Fallback to straight line if no real route
-          routeLineRef.current.setLatLngs([latlng, targetCoords]);
+        } else if (routeLineRef.current) {
+          const currentLatLngs = routeLineRef.current.getLatLngs() as any[];
+          if (!currentLatLngs || currentLatLngs.length <= 2) {
+            // Fallback to straight line if no real route
+            routeLineRef.current.setLatLngs([latlng, targetCoords]);
+          } else {
+            // If we have a real route, just update the first point to the courier's current location to keep it connected
+            currentLatLngs[0] = latlng;
+            routeLineRef.current.setLatLngs(currentLatLngs);
+          }
         }
       }
     }
