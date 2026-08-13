@@ -2,8 +2,8 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { Restaurant } from "@/types";
-import { Search, MapPin, Star, ArrowRight, Store, ArrowUpRight, Flame } from "lucide-react";
+import { Restaurant, MenuItem } from "@/types";
+import { Search, MapPin, Star, ArrowRight, Store, ArrowUpRight, Flame, Utensils } from "lucide-react";
 
 export default async function MarketplacePage() {
   // Fetch active restaurants from Supabase
@@ -12,6 +12,12 @@ export default async function MarketplacePage() {
     .select("*")
     .eq("is_active", true)
     .order("name");
+
+  // Fetch some popular/active menu items to show as previews
+  const { data: menuItems } = await supabase
+    .from("menu_items")
+    .select("*")
+    .eq("is_available", true);
 
   return (
     <div className="min-h-screen bg-slate-50 font-[Outfit]">
@@ -138,6 +144,33 @@ export default async function MarketplacePage() {
                       <ArrowRight className="w-5 h-5" />
                     </div>
                   </div>
+                  
+                  {/* Food Previews */}
+                  {(() => {
+                    const rItems = (menuItems || []).filter((i: MenuItem) => i.restaurant_id === restaurant.id).slice(0, 3);
+                    if (rItems.length > 0) {
+                      return (
+                        <div className="mt-4 border-t border-slate-100 pt-3">
+                          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Featured Items</p>
+                          <div className="flex items-center gap-2">
+                            {rItems.map((item: MenuItem) => (
+                              <div key={item.id} className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-2 flex flex-col items-center text-center gap-1">
+                                {item.image_url ? (
+                                  <img src={item.image_url} alt={item.name} className="w-10 h-10 rounded-lg object-cover shadow-sm" />
+                                ) : (
+                                  <div className="w-10 h-10 rounded-lg bg-white shadow-sm flex items-center justify-center">
+                                    <Utensils className="w-4 h-4 text-slate-300" />
+                                  </div>
+                                )}
+                                <span className="text-[10px] font-bold text-slate-700 line-clamp-1 w-full">{item.name}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
               </Link>
             )})}
