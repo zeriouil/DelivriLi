@@ -100,43 +100,50 @@ export function DeliveryJobCard({ order, onUpdateStatus }: DeliveryJobCardProps)
 
         {/* ── Step-by-Step Courier Actions ──────────────── */}
         <div className="pt-2 border-t border-slate-100 space-y-2">
+
+          {/* STEP 1: Pick up (shown when order is ready at restaurant) */}
           {currentStatus === 'ready' && (
             <button
+              id={`pickup-${order.id}`}
               onClick={() => onUpdateStatus(order.id, 'picked_up')}
-              className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white py-3.5 rounded-xl font-black text-sm shadow-md shadow-amber-500/30 transition-all active:scale-[0.98]"
+              className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 active:scale-[0.97] text-white py-4 rounded-xl font-black text-sm shadow-md shadow-amber-500/30 transition-all"
             >
               <Store className="w-5 h-5" />
-              1. Pick Up Order from Restaurant
+              📦 Step 1 — Pick Up from Restaurant
             </button>
           )}
 
+          {/* STEP 2: Arrive (shown while en-route) */}
           {(currentStatus === 'picked_up' || currentStatus === 'out_for_delivery') && (
             <button
+              id={`arrive-${order.id}`}
               onClick={() => onUpdateStatus(order.id, 'arrived')}
-              className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-xl font-black text-sm shadow-md shadow-indigo-600/30 transition-all active:scale-[0.98]"
+              className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.97] text-white py-4 rounded-xl font-black text-sm shadow-md shadow-indigo-600/30 transition-all"
             >
               <MapPinCheck className="w-5 h-5" />
-              2. Arrived at Customer Location
+              📍 Step 2 — Arrived at Customer
             </button>
           )}
 
+          {/* STEP 3: Deliver (shown when at customer door) */}
           {currentStatus === 'arrived' && (
             <button
+              id={`deliver-${order.id}`}
               onClick={() => onUpdateStatus(order.id, 'completed')}
-              className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-xl font-black text-sm shadow-md shadow-emerald-600/30 transition-all active:scale-[0.98] animate-pulse"
+              className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.97] text-white py-4 rounded-xl font-black text-sm shadow-md shadow-emerald-600/30 transition-all"
             >
               <PackageCheck className="w-5 h-5" />
-              3. Hand Over &amp; Mark Delivered
+              ✅ Step 3 — Hand Over &amp; Mark Delivered
             </button>
           )}
 
-          {/* Fallback direct complete button */}
-          {currentStatus !== 'completed' && currentStatus !== 'arrived' && (
+          {/* Emergency skip (only for arrived state — already gone through steps) */}
+          {currentStatus !== 'ready' && currentStatus !== 'picked_up' && currentStatus !== 'out_for_delivery' && currentStatus !== 'arrived' && (
             <button
               onClick={() => onUpdateStatus(order.id, 'completed')}
-              className="w-full flex items-center justify-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 py-1 transition"
+              className="w-full flex items-center justify-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 py-2 transition"
             >
-              <CheckCircle2 className="w-3.5 h-3.5" /> Skip to Mark Delivered
+              <CheckCircle2 className="w-3.5 h-3.5" /> Skip all steps — Mark Delivered
             </button>
           )}
         </div>

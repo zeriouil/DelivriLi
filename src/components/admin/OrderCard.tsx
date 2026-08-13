@@ -30,12 +30,15 @@ function useElapsedTime(createdAt: string) {
 }
 
 const STATUS_CONFIG: Record<OrderStatus, { label: string; pill: string }> = {
-  pending:   { label: 'Pending',   pill: 'bg-amber-100 text-amber-800 border-amber-300' },
-  confirmed: { label: 'Confirmed', pill: 'bg-blue-100 text-blue-800 border-blue-300' },
-  preparing: { label: 'Preparing', pill: 'bg-indigo-100 text-indigo-800 border-indigo-300' },
-  ready:     { label: 'Ready',     pill: 'bg-emerald-100 text-emerald-800 border-emerald-300' },
-  completed: { label: 'Completed', pill: 'bg-slate-100 text-slate-600 border-slate-200' },
-  cancelled: { label: 'Cancelled', pill: 'bg-red-100 text-red-700 border-red-200' },
+  pending:          { label: 'Pending',           pill: 'bg-amber-100 text-amber-800 border-amber-300' },
+  confirmed:        { label: 'Confirmed',          pill: 'bg-blue-100 text-blue-800 border-blue-300' },
+  preparing:        { label: 'Preparing',          pill: 'bg-indigo-100 text-indigo-800 border-indigo-300' },
+  ready:            { label: 'Ready',              pill: 'bg-emerald-100 text-emerald-800 border-emerald-300' },
+  picked_up:        { label: 'Picked Up 📦',       pill: 'bg-orange-100 text-orange-800 border-orange-300' },
+  out_for_delivery: { label: 'Out for Delivery 🛵', pill: 'bg-sky-100 text-sky-800 border-sky-300' },
+  arrived:          { label: 'Arrived 📍',          pill: 'bg-purple-100 text-purple-800 border-purple-300' },
+  completed:        { label: 'Completed',           pill: 'bg-slate-100 text-slate-600 border-slate-200' },
+  cancelled:        { label: 'Cancelled',           pill: 'bg-red-100 text-red-700 border-red-200' },
 };
 
 const ORDER_TYPE_LABEL: Record<string, string> = {

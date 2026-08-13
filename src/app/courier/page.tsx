@@ -88,7 +88,9 @@ export default function CourierDashboard() {
     setAllOrders(Array.from(map.values()));
   }, []);
 
-  // Fetch READY & OUT_FOR_DELIVERY orders (active jobs for courier)
+  // Fetch active courier deliveries (ready, picked_up, out_for_delivery, arrived)
+  const ACTIVE_COURIER_STATUSES = ["ready", "picked_up", "out_for_delivery", "arrived"];
+
   const fetchReadyDeliveries = useCallback(async () => {
     let dbOrders: Order[] = [];
     try {
@@ -96,7 +98,7 @@ export default function CourierDashboard() {
         .from("orders")
         .select("*")
         .eq("order_type", "delivery")
-        .in("status", ["ready", "out_for_delivery"])
+        .in("status", ACTIVE_COURIER_STATUSES)
         .order("updated_at", { ascending: false });
       if (data) dbOrders = data;
     } catch {}
@@ -104,17 +106,21 @@ export default function CourierDashboard() {
     let localOrders: Order[] = [];
     try {
       localOrders = (JSON.parse(localStorage.getItem('local_orders_list') || '[]') as Order[])
-        .filter(o => o.order_type === 'delivery' && ["ready", "out_for_delivery"].includes(o.status));
+        .filter(o => o.order_type === 'delivery' && ACTIVE_COURIER_STATUSES.includes(o.status));
     } catch {}
 
     const map = new Map<string, Order>();
-    [...dbOrders, ...localOrders].forEach(o => map.set(o.id, o));
+    // DB orders take priority (most recent source of truth)
+    localOrders.forEach(o => map.set(o.id, o));
+    dbOrders.forEach(o => map.set(o.id, o));
+
     const combined = Array.from(map.values()).sort(
       (a, b) => new Date(b.updated_at || b.created_at).getTime() - new Date(a.updated_at || a.created_at).getTime()
     );
 
     setReadyDeliveries(combined);
 
+    // Only alert for truly new READY orders
     const readyOnly = combined.filter(o => o.status === 'ready');
     if (isOnline && readyOnly.length > 0) {
       const newest = readyOnly[0];
@@ -123,6 +129,7 @@ export default function CourierDashboard() {
         setIncomingJob(newest);
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOnline]);
 
   // Start fetching, polling & realtime when online / location active
@@ -159,35 +166,18 @@ export default function CourierDashboard() {
     };
   }, [locationState, fetchAllOrders, fetchReadyDeliveries]);
 
-  const handleAccept = async (order?: Order) => {
-    const target = order || incomingJob;
+  // Accept just opens the job list — status stays 'ready' until courier taps Pick Up
+  const handleAccept = (order?: Order) => {
     setIncomingJob(null);
     setJobListOpen(true);
-    if (!target) return;
-
-    const newStatus: OrderStatus = 'out_for_delivery';
-
-    // Update state
-    setReadyDeliveries(cur => cur.map(o => o.id === target.id ? { ...o, status: newStatus } : o));
-
-    // Local Storage update
-    try {
-      const localList = JSON.parse(localStorage.getItem('local_orders_list') || '[]');
-      const updatedList = localList.map((o: Order) => o.id === target.id ? { ...o, status: newStatus } : o);
-      localStorage.setItem('local_orders_list', JSON.stringify(updatedList));
-
-      const single = localStorage.getItem(`local_order_${target.id}`);
-      if (single) {
-        const parsed = JSON.parse(single);
-        parsed.status = newStatus;
-        localStorage.setItem(`local_order_${target.id}`, JSON.stringify(parsed));
-      }
-    } catch {}
-
-    // Supabase update
-    try {
-      await supabase.from("orders").update({ status: newStatus }).eq("id", target.id);
-    } catch {}
+    // Ensure the accepted order appears in the jobs list immediately
+    const target = order || incomingJob;
+    if (target) {
+      setReadyDeliveries(prev => {
+        const exists = prev.some(o => o.id === target.id);
+        return exists ? prev : [target, ...prev];
+      });
+    }
   };
 
   const handleDecline = (orderId: string) => {
