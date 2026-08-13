@@ -11,7 +11,7 @@ const STEPS: { status: OrderStatus; label: string; sublabel: string; icon: React
 ];
 
 const STATUS_INDEX: Record<string, number> = {
-  pending: -1, confirmed: 0, preparing: 1, ready: 2, completed: 3,
+  pending: -1, confirmed: 0, preparing: 1, ready: 2, picked_up: 2, out_for_delivery: 2, arrived: 2, completed: 3,
 };
 
 interface OrderStatusTimelineProps {
@@ -23,7 +23,7 @@ export function OrderStatusTimeline({ status, createdAt }: OrderStatusTimelinePr
   const currentIndex = STATUS_INDEX[status] ?? -1;
 
   // Estimate ETA: 5 min confirm + 20 min prep + 20 min delivery
-  const etaMinutes = [35, 25, 20, 0][Math.max(0, currentIndex + 1)] ?? 0;
+  const etaMinutes = [35, 25, 15, 0][Math.max(0, currentIndex + 1)] ?? 0;
 
   return (
     <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
@@ -36,7 +36,9 @@ export function OrderStatusTimeline({ status, createdAt }: OrderStatusTimelinePr
               {status === "pending" ? "Waiting for confirmation…" :
                status === "confirmed" ? "Order Confirmed!" :
                status === "preparing" ? "Preparing your food" :
-               status === "ready" ? "On the way!" :
+               status === "ready" ? "Food ready for pickup" :
+               status === "picked_up" || status === "out_for_delivery" ? "On the way to you!" :
+               status === "arrived" ? "Courier has arrived! 🛵" :
                status === "completed" ? "Delivered! 🎉" :
                status === "cancelled" ? "Order Cancelled" : status}
             </h2>

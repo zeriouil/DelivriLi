@@ -195,11 +195,14 @@ export default function CourierDashboard() {
     setReadyDeliveries((prev) => prev.filter((o) => o.id !== orderId));
   };
 
-  const handleMarkDelivered = async (orderId: string) => {
-    setReadyDeliveries((cur) => cur.filter((o) => o.id !== orderId));
-    setAllOrders((cur) => cur.filter((o) => o.id !== orderId));
-
-    const newStatus: OrderStatus = 'completed';
+  const handleUpdateStatus = async (orderId: string, newStatus: OrderStatus) => {
+    if (newStatus === 'completed') {
+      setReadyDeliveries((cur) => cur.filter((o) => o.id !== orderId));
+      setAllOrders((cur) => cur.filter((o) => o.id !== orderId));
+    } else {
+      setReadyDeliveries((cur) => cur.map((o) => o.id === orderId ? { ...o, status: newStatus } : o));
+      setAllOrders((cur) => cur.map((o) => o.id === orderId ? { ...o, status: newStatus } : o));
+    }
 
     // Local Storage update
     try {
@@ -438,7 +441,7 @@ export default function CourierDashboard() {
             </div>
           ) : (
             readyDeliveries.map((order) => (
-              <DeliveryJobCard key={order.id} order={order} onMarkDelivered={handleMarkDelivered} />
+              <DeliveryJobCard key={order.id} order={order} onUpdateStatus={handleUpdateStatus} />
             ))
           )}
         </div>
