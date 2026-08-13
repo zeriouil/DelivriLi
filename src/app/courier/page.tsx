@@ -26,12 +26,28 @@ export default function CourierDashboard() {
   const alertedIds = useRef<Set<string>>(new Set());
   const watchIdRef = useRef<number | null>(null);
 
-  // Broadcast courier GPS to localStorage whenever position changes
+  const trackingChannelRef = useRef<any>(null);
+
+  useEffect(() => {
+    const channel = supabase.channel('live_tracking');
+    channel.subscribe();
+    trackingChannelRef.current = channel;
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  // Broadcast courier GPS to localStorage AND Supabase whenever position changes
   // Customer tracking pages poll this to show real courier location on map
   const broadcastPosition = (pos: [number, number]) => {
     try {
-      const payload = JSON.stringify({ lat: pos[0], lng: pos[1], ts: Date.now() });
-      localStorage.setItem('courier_position', payload);
+      const payload = { lat: pos[0], lng: pos[1], ts: Date.now() };
+      localStorage.setItem('courier_position', JSON.stringify(payload));
+      if (trackingChannelRef.current) {
+        trackingChannelRef.current.send({
+          type: 'broadcast',
+          event: 'courier_moved',
+          payload
+        });
+      }
     } catch {}
   };
 

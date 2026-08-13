@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { Map as LeafletMap, Marker, Polyline } from "leaflet";
+import { supabase } from "@/lib/supabase";
 
 interface LiveTrackingMapProps {
   deliveryAddress: string;
@@ -187,7 +188,7 @@ export function LiveTrackingMap({ deliveryAddress, orderStatus }: LiveTrackingMa
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Poll localStorage for courier position every 3 seconds
+  // Poll localStorage for same-device, and subscribe to Supabase for cross-device
   useEffect(() => {
     const poll = () => {
       const pos = readCourierPosition();
@@ -203,9 +204,21 @@ export function LiveTrackingMap({ deliveryAddress, orderStatus }: LiveTrackingMa
     };
     window.addEventListener("storage", onStorage);
 
+    // Cross-device Supabase sync
+    const channel = supabase.channel('live_tracking')
+      .on('broadcast', { event: 'courier_moved' }, (payload) => {
+        const pos = payload.payload as CourierPosition;
+        setCourierPos(pos);
+        setIsLive(true);
+        // Save back to local storage so other tabs sync up
+        try { localStorage.setItem("courier_position", JSON.stringify(pos)); } catch {}
+      })
+      .subscribe();
+
     return () => {
       clearInterval(interval);
       window.removeEventListener("storage", onStorage);
+      supabase.removeChannel(channel);
     };
   }, []);
 
