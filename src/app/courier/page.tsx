@@ -88,7 +88,7 @@ export default function CourierDashboard() {
     setAllOrders(Array.from(map.values()));
   }, []);
 
-  // Fetch READY orders (trigger popup alert for newest ready order)
+  // Fetch READY & OUT_FOR_DELIVERY orders (active jobs for courier)
   const fetchReadyDeliveries = useCallback(async () => {
     let dbOrders: Order[] = [];
     try {
@@ -96,7 +96,7 @@ export default function CourierDashboard() {
         .from("orders")
         .select("*")
         .eq("order_type", "delivery")
-        .eq("status", "ready")
+        .in("status", ["ready", "out_for_delivery"])
         .order("updated_at", { ascending: false });
       if (data) dbOrders = data;
     } catch {}
@@ -104,7 +104,7 @@ export default function CourierDashboard() {
     let localOrders: Order[] = [];
     try {
       localOrders = (JSON.parse(localStorage.getItem('local_orders_list') || '[]') as Order[])
-        .filter(o => o.order_type === 'delivery' && o.status === 'ready');
+        .filter(o => o.order_type === 'delivery' && ["ready", "out_for_delivery"].includes(o.status));
     } catch {}
 
     const map = new Map<string, Order>();
@@ -115,8 +115,9 @@ export default function CourierDashboard() {
 
     setReadyDeliveries(combined);
 
-    if (isOnline && combined.length > 0) {
-      const newest = combined[0];
+    const readyOnly = combined.filter(o => o.status === 'ready');
+    if (isOnline && readyOnly.length > 0) {
+      const newest = readyOnly[0];
       if (!alertedIds.current.has(newest.id)) {
         alertedIds.current.add(newest.id);
         setIncomingJob(newest);
@@ -158,18 +159,66 @@ export default function CourierDashboard() {
     };
   }, [locationState, fetchAllOrders, fetchReadyDeliveries]);
 
-  const handleAccept = () => { setIncomingJob(null); setJobListOpen(true); };
+  const handleAccept = async (order?: Order) => {
+    const target = order || incomingJob;
+    setIncomingJob(null);
+    setJobListOpen(true);
+    if (!target) return;
+
+    const newStatus: OrderStatus = 'out_for_delivery';
+
+    // Update state
+    setReadyDeliveries(cur => cur.map(o => o.id === target.id ? { ...o, status: newStatus } : o));
+
+    // Local Storage update
+    try {
+      const localList = JSON.parse(localStorage.getItem('local_orders_list') || '[]');
+      const updatedList = localList.map((o: Order) => o.id === target.id ? { ...o, status: newStatus } : o);
+      localStorage.setItem('local_orders_list', JSON.stringify(updatedList));
+
+      const single = localStorage.getItem(`local_order_${target.id}`);
+      if (single) {
+        const parsed = JSON.parse(single);
+        parsed.status = newStatus;
+        localStorage.setItem(`local_order_${target.id}`, JSON.stringify(parsed));
+      }
+    } catch {}
+
+    // Supabase update
+    try {
+      await supabase.from("orders").update({ status: newStatus }).eq("id", target.id);
+    } catch {}
+  };
+
   const handleDecline = (orderId: string) => {
     setIncomingJob(null);
     setReadyDeliveries((prev) => prev.filter((o) => o.id !== orderId));
   };
+
   const handleMarkDelivered = async (orderId: string) => {
+    setReadyDeliveries((cur) => cur.filter((o) => o.id !== orderId));
+    setAllOrders((cur) => cur.filter((o) => o.id !== orderId));
+
+    const newStatus: OrderStatus = 'completed';
+
+    // Local Storage update
     try {
-      const { error } = await supabase.from("orders").update({ status: "completed" }).eq("id", orderId);
-      if (error) throw error;
-      setReadyDeliveries((cur) => cur.filter((o) => o.id !== orderId));
-      setAllOrders((cur) => cur.filter((o) => o.id !== orderId));
-    } catch { alert("Failed to update delivery status"); }
+      const localList = JSON.parse(localStorage.getItem('local_orders_list') || '[]');
+      const updatedList = localList.map((o: Order) => o.id === orderId ? { ...o, status: newStatus } : o);
+      localStorage.setItem('local_orders_list', JSON.stringify(updatedList));
+
+      const single = localStorage.getItem(`local_order_${orderId}`);
+      if (single) {
+        const parsed = JSON.parse(single);
+        parsed.status = newStatus;
+        localStorage.setItem(`local_order_${orderId}`, JSON.stringify(parsed));
+      }
+    } catch {}
+
+    // Supabase update
+    try {
+      await supabase.from("orders").update({ status: newStatus }).eq("id", orderId);
+    } catch {}
   };
 
   // ── LOCATION GATE SCREENS ─────────────────────────────────────────────────

@@ -82,7 +82,7 @@ export interface CustomerDetails {
   notes?: string;
 }
 
-export type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'completed' | 'cancelled';
+export type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'out_for_delivery' | 'completed' | 'cancelled';
 
 export interface OrderItem {
   id: string;

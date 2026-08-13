@@ -263,6 +263,21 @@ export default function AdminDashboard() {
           );
         })}
       </div>
+
+      {/* ── Picked Up / Out for Delivery Section ───── */}
+      {getOrdersByStatus(['out_for_delivery', 'completed']).length > 0 && (
+        <div className="mt-8 border-t border-slate-200 pt-6">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold text-slate-700 text-sm flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+              Picked Up & Out for Delivery ({getOrdersByStatus(['out_for_delivery', 'completed']).length})
+            </h3>
+            <span className="text-xs text-slate-400 font-medium bg-slate-100 px-3 py-1 rounded-full">
+              ✓ Cleared from active kitchen board
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
