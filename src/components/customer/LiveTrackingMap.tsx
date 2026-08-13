@@ -47,15 +47,42 @@ function haversineMetres(lat1: number, lon1: number, lat2: number, lon2: number)
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+// Fetch driving route using OSRM public API
+async function fetchRoute(start: [number, number], end: [number, number]): Promise<[number, number][] | null> {
+  try {
+    const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?overview=full&geometries=geojson`);
+    const data = await res.json();
+    if (data.code === 'Ok' && data.routes.length > 0) {
+      return data.routes[0].geometry.coordinates.map((c: any) => [c[1], c[0]]); // OSRM returns [lon, lat]
+    }
+  } catch {}
+  return null;
+}
+
 export function LiveTrackingMap({ deliveryAddress, orderStatus }: LiveTrackingMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const courierMarkerRef = useRef<Marker | null>(null);
+  const customerMarkerRef = useRef<Marker | null>(null);
   const routeLineRef = useRef<Polyline | null>(null);
   const destCoordsRef = useRef<[number, number] | null>(null);
+  
   const [courierPos, setCourierPos] = useState<CourierPosition | null>(null);
+  const [customerPos, setCustomerPos] = useState<[number, number] | null>(null);
   const [distanceMetres, setDistanceMetres] = useState<number | null>(null);
   const [isLive, setIsLive] = useState(false);
+
+  // Track customer GPS
+  useEffect(() => {
+    if (navigator.geolocation) {
+      const watchId = navigator.geolocation.watchPosition(
+        (p) => setCustomerPos([p.coords.latitude, p.coords.longitude]),
+        () => {},
+        { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+      );
+      return () => navigator.geolocation.clearWatch(watchId);
+    }
+  }, []);
 
   // Build map once
   useEffect(() => {
@@ -95,8 +122,22 @@ export function LiveTrackingMap({ deliveryAddress, orderStatus }: LiveTrackingMa
           iconAnchor: [18, 36],
         });
         L.marker(destCoords, { icon: destIcon }).addTo(map)
-          .bindPopup("<b>Your location</b>", { closeButton: false });
+          .bindPopup("<b>Delivery Address</b>", { closeButton: false });
       }
+
+      // Customer live GPS marker (Blue dot)
+      const myPosIcon = L.divIcon({
+        className: "",
+        html: `<div style="position:relative;width:40px;height:40px;display:flex;align-items:center;justify-content:center;">
+                 <div style="position:absolute;width:40px;height:40px;border-radius:50%;background:rgba(59,130,246,0.25);animation:pulse-ring 2s ease-out infinite;"></div>
+                 <div style="width:16px;height:16px;border-radius:50%;background:#3b82f6;border:3px solid white;box-shadow:0 0 8px rgba(59,130,246,0.6);"></div>
+               </div>`,
+        iconSize: [40, 40],
+        iconAnchor: [20, 20],
+      });
+      // Place it initially off-screen if we don't have position yet, we'll update it later
+      customerMarkerRef.current = L.marker([0, 0], { icon: myPosIcon }).addTo(map);
+      customerMarkerRef.current.setOpacity(0); // Hide until we have coordinates
 
       // Courier marker (placed at real or estimated position)
       const realPos = readCourierPosition();
@@ -120,13 +161,21 @@ export function LiveTrackingMap({ deliveryAddress, orderStatus }: LiveTrackingMa
         .bindPopup("<b>Your courier</b>", { closeButton: false });
       courierMarkerRef.current = marker;
 
-      // Dashed route line
+      // Draw initial route
       if (destCoords) {
-        const line = L.polyline([initialCourierPos, destCoords], {
-          color: "#6366f1", weight: 3, dashArray: "8 6", opacity: 0.65,
+        routeLineRef.current = L.polyline([initialCourierPos, destCoords], {
+          color: "#6366f1", weight: 4, opacity: 0.8, dashArray: "10 8", lineCap: "round"
         }).addTo(map);
-        routeLineRef.current = line;
-        map.fitBounds([initialCourierPos, destCoords], { padding: [50, 50] });
+
+        fetchRoute(initialCourierPos, destCoords).then(route => {
+          if (route && routeLineRef.current && !destroyed) {
+            routeLineRef.current.setLatLngs(route);
+            routeLineRef.current.setStyle({ dashArray: "", color: "#4f46e5" }); // Solid line for real route
+            map.fitBounds(routeLineRef.current.getBounds(), { padding: [50, 50] });
+          } else if (!destroyed) {
+            map.fitBounds([initialCourierPos, destCoords], { padding: [50, 50] });
+          }
+        });
       }
     };
 
@@ -149,7 +198,6 @@ export function LiveTrackingMap({ deliveryAddress, orderStatus }: LiveTrackingMa
     poll(); // immediate
     const interval = setInterval(poll, 3000);
 
-    // Also listen for storage events (same-device multi-tab)
     const onStorage = (e: StorageEvent) => {
       if (e.key === "courier_position") poll();
     };
@@ -161,24 +209,45 @@ export function LiveTrackingMap({ deliveryAddress, orderStatus }: LiveTrackingMa
     };
   }, []);
 
-  // Update map when courier position changes
+  // Update map when courier or customer position changes
+  const lastRouteFetch = useRef<number>(0);
+
   useEffect(() => {
-    if (!courierPos || !courierMarkerRef.current || !mapRef.current) return;
+    if (!courierMarkerRef.current || !mapRef.current) return;
 
-    const latlng: [number, number] = [courierPos.lat, courierPos.lng];
-    courierMarkerRef.current.setLatLng(latlng);
-
-    // Update route line
-    if (routeLineRef.current && destCoordsRef.current) {
-      routeLineRef.current.setLatLngs([latlng, destCoordsRef.current]);
+    if (customerPos && customerMarkerRef.current) {
+      customerMarkerRef.current.setLatLng(customerPos);
+      customerMarkerRef.current.setOpacity(1); // Make visible
     }
 
-    // Calculate and display distance
-    if (destCoordsRef.current) {
-      const m = haversineMetres(latlng[0], latlng[1], destCoordsRef.current[0], destCoordsRef.current[1]);
-      setDistanceMetres(m);
+    if (courierPos) {
+      const latlng: [number, number] = [courierPos.lat, courierPos.lng];
+      courierMarkerRef.current.setLatLng(latlng);
+
+      const targetCoords = destCoordsRef.current || customerPos;
+
+      if (targetCoords) {
+        // Calculate and display distance
+        const m = haversineMetres(latlng[0], latlng[1], targetCoords[0], targetCoords[1]);
+        setDistanceMetres(m);
+
+        // Update route line occasionally to not spam API (every 10s max)
+        const now = Date.now();
+        if (now - lastRouteFetch.current > 10000 && routeLineRef.current) {
+          lastRouteFetch.current = now;
+          fetchRoute(latlng, targetCoords).then(route => {
+            if (route && routeLineRef.current) {
+              routeLineRef.current.setLatLngs(route);
+              routeLineRef.current.setStyle({ dashArray: "", color: "#4f46e5" });
+            }
+          });
+        } else if (routeLineRef.current && (!routeLineRef.current.getLatLngs() || (routeLineRef.current.getLatLngs() as any).length <= 2)) {
+          // Fallback to straight line if no real route
+          routeLineRef.current.setLatLngs([latlng, targetCoords]);
+        }
+      }
     }
-  }, [courierPos]);
+  }, [courierPos, customerPos]);
 
   const distanceLabel = distanceMetres === null
     ? null
