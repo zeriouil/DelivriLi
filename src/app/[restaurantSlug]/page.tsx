@@ -3,100 +3,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Search, ShoppingBag, MapPin, Star, Clock, Flame, Heart,
-  ChevronDown, X, Zap, Tag, TrendingUp
+  ChevronDown, X, Zap, Tag, TrendingUp, Loader2, Store
 } from 'lucide-react';
 import { MenuItem, Category, Restaurant } from '@/types';
 import { useCart } from '@/context/cart-context';
 import { ItemModal } from '@/components/customer/item-modal';
 import { CartDrawer } from '@/components/cart/cart-drawer';
-
-/* ────── Demo Data ────────────────────────────────────── */
-const DEMO_RESTAURANT: Restaurant = {
-  id: '00000000-0000-0000-0000-000000000001',
-  slug: 'taco-barn',
-  name: 'Taco Barn Casa',
-  phone_number: '212612345678',
-  currency_code: 'MAD',
-  currency_symbol: 'DH',
-  address: 'Boulevard Anfa, Casablanca',
-  delivery_fee: 15.00,
-  min_order_amount: 50.00,
-  is_active: true,
-};
-
-const DEMO_CATEGORIES: Category[] = [
-  { id: 'c1', restaurant_id: 'r1', name: '🔥 Popular',  display_order: 1, is_active: true },
-  { id: 'c2', restaurant_id: 'r1', name: '🌮 Tacos',    display_order: 2, is_active: true },
-  { id: 'c3', restaurant_id: 'r1', name: '🍔 Burgers',  display_order: 3, is_active: true },
-  { id: 'c4', restaurant_id: 'r1', name: '🥤 Drinks',   display_order: 4, is_active: true },
-  { id: 'c5', restaurant_id: 'r1', name: '🍟 Sides',    display_order: 5, is_active: true },
-];
-
-const DEMO_ITEMS: MenuItem[] = [
-  {
-    id: 'm1', restaurant_id: 'r1', category_id: 'c2',
-    name: 'French Taco XL',
-    description: 'Choice of 3 meats, stuffed with crispy fries & signature warm cheese sauce. A Casablanca classic!',
-    base_price: 55.00, badge: 'Best Seller', is_available: true,
-    modifier_groups: [
-      {
-        id: 'mg1', restaurant_id: 'r1', name: 'Select 3 Meats',
-        min_selection: 1, max_selection: 3, is_required: true,
-        modifiers: [
-          { id: 'mod1', group_id: 'mg1', name: 'Minced Beef',           price_delta: 0,    is_available: true, display_order: 1 },
-          { id: 'mod2', group_id: 'mg1', name: 'Crispy Chicken Tenders',price_delta: 0,    is_available: true, display_order: 2 },
-          { id: 'mod3', group_id: 'mg1', name: 'Marinated Meatballs',   price_delta: 5.00, is_available: true, display_order: 3 },
-        ],
-      },
-      {
-        id: 'mg2', restaurant_id: 'r1', name: 'Choose Sauces',
-        min_selection: 0, max_selection: 2, is_required: false,
-        modifiers: [
-          { id: 'mod4', group_id: 'mg2', name: 'Algérienne',        price_delta: 0,    is_available: true, display_order: 1 },
-          { id: 'mod5', group_id: 'mg2', name: 'Biggy Burger',      price_delta: 0,    is_available: true, display_order: 2 },
-          { id: 'mod6', group_id: 'mg2', name: 'Extra Cheese Sauce',price_delta: 4.00, is_available: true, display_order: 3 },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'm2', restaurant_id: 'r1', category_id: 'c3',
-    name: 'Smash Truffle Burger',
-    description: 'Double Angus beef patties, caramelized onions, melted cheddar & truffle mayo. Premium comfort food.',
-    base_price: 65.00, badge: 'Chef Favorite', is_available: true,
-  },
-  {
-    id: 'm3', restaurant_id: 'r1', category_id: 'c1',
-    name: 'Loaded Nachos',
-    description: 'Crispy tortilla chips piled high with melted cheddar, jalapeños, sour cream & fresh guacamole.',
-    base_price: 45.00, badge: 'New', is_available: true,
-  },
-  {
-    id: 'm4', restaurant_id: 'r1', category_id: 'c4',
-    name: 'Fresh Lemonade',
-    description: 'Hand-squeezed Moroccan lemons with a hint of mint and rose water. Served ice cold.',
-    base_price: 22.00, is_available: true,
-  },
-  {
-    id: 'm5', restaurant_id: 'r1', category_id: 'c5',
-    name: 'Truffle Fries',
-    description: 'Golden Belgian fries tossed in truffle oil, parmesan, and fresh herbs.',
-    base_price: 32.00, badge: 'Popular', is_available: true,
-  },
-  {
-    id: 'm6', restaurant_id: 'r1', category_id: 'c3',
-    name: 'Crispy Chicken Burger',
-    description: 'Double-fried buttermilk chicken, pickles, sriracha mayo on a brioche bun.',
-    base_price: 58.00, is_available: false,
-  },
-];
-
-const ITEM_ICONS: Record<string, string> = {
-  m1: '🌮', m2: '🍔', m3: '🧀', m4: '🍋', m5: '🍟', m6: '🍗',
-};
-const ITEM_CALORIES: Record<string, string> = {
-  m1: '820 kcal', m2: '950 kcal', m3: '680 kcal', m4: '120 kcal', m5: '460 kcal', m6: '870 kcal',
-};
+import { supabase } from '@/lib/supabase';
 
 const BADGE_STYLE: Record<string, string> = {
   'Best Seller': 'bg-amber-400/20 text-amber-700 border border-amber-300',
@@ -113,9 +26,20 @@ const PROMOS = [
   '🌶️ New spicy menu items just dropped!',
 ];
 
+const ITEM_ICONS: Record<string, string> = {};
+const ITEM_CALORIES: Record<string, string> = {};
+
 /* ────── Component ────────────────────────────────────── */
-export default function CustomerMenuPage() {
+export default function CustomerMenuPage({ params }: { params: { restaurantSlug: string } }) {
   const { totalItemCount, subtotal, isCartOpen, setIsCartOpen } = useCart();
+  
+  // Data State
+  const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [items, setItems] = useState<MenuItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // UI State
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeModalItem, setActiveModalItem] = useState<MenuItem | null>(null);
@@ -125,6 +49,27 @@ export default function CustomerMenuPage() {
   const [promoIdx, setPromoIdx] = useState(0);
   const [cartBump, setCartBump] = useState(false);
   const prevCount = useRef(totalItemCount);
+
+  // Load data from Supabase
+  useEffect(() => {
+    async function fetchMenu() {
+      const { data: rData } = await supabase.from('restaurants').select('*').eq('slug', params.restaurantSlug).single();
+      if (!rData) {
+        setLoading(false);
+        return;
+      }
+      setRestaurant(rData);
+
+      const { data: cData } = await supabase.from('categories').select('*').eq('restaurant_id', rData.id).order('display_order');
+      setCategories(cData || []);
+
+      const { data: iData } = await supabase.from('menu_items').select('*').eq('restaurant_id', rData.id).order('name');
+      setItems(iData || []);
+      
+      setLoading(false);
+    }
+    fetchMenu();
+  }, [params.restaurantSlug]);
 
   // Load favourites from localStorage
   useEffect(() => {
@@ -159,8 +104,22 @@ export default function CustomerMenuPage() {
     });
   };
 
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center bg-slate-50"><Loader2 className="w-10 h-10 animate-spin text-indigo-600" /></div>;
+  }
+
+  if (!restaurant) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6 text-center">
+        <Store className="w-16 h-16 text-slate-300 mb-4" />
+        <h2 className="text-2xl font-black text-slate-900 mb-2">Restaurant Not Found</h2>
+        <p className="text-slate-500">The restaurant you are looking for does not exist or has been removed.</p>
+      </div>
+    );
+  }
+
   // Filter + Sort
-  let filteredItems = DEMO_ITEMS.filter(item => {
+  let filteredItems = items.filter(item => {
     const matchesCat = selectedCategory === 'all' || item.category_id === selectedCategory;
     const q = searchQuery.toLowerCase();
     const matchesSearch = item.name.toLowerCase().includes(q) ||
@@ -171,12 +130,10 @@ export default function CustomerMenuPage() {
   if (sortBy === 'price_asc') filteredItems = [...filteredItems].sort((a, b) => a.base_price - b.base_price);
   if (sortBy === 'price_desc') filteredItems = [...filteredItems].sort((a, b) => b.base_price - a.base_price);
 
-  const itemCountByCat = (catId: string) =>
-    DEMO_ITEMS.filter(i => i.category_id === catId).length;
+  const itemCountByCat = (catId: string) => items.filter(i => i.category_id === catId).length;
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 pb-28 font-[Outfit]">
-
       {/* ── Hero Header ─────────────────────────────── */}
       <header className="relative overflow-hidden bg-gradient-to-br from-emerald-700 via-emerald-600 to-teal-500 text-white pt-10 pb-8 px-4 rounded-b-[2rem] shadow-xl">
         {/* Animated blobs */}
@@ -188,14 +145,18 @@ export default function CustomerMenuPage() {
         <div className="relative z-10 max-w-md mx-auto">
           {/* Logo + Info */}
           <div className="flex items-center gap-4 mb-5">
-            <div className="w-16 h-16 rounded-2xl bg-white/15 backdrop-blur border border-white/30 flex items-center justify-center text-3xl shadow-lg flex-shrink-0">
-              🌮
-            </div>
+            {restaurant.logo_url ? (
+              <img src={restaurant.logo_url} alt={restaurant.name} className="w-16 h-16 rounded-2xl border border-white/30 object-cover shadow-lg flex-shrink-0" />
+            ) : (
+              <div className="w-16 h-16 rounded-2xl bg-white/15 backdrop-blur border border-white/30 flex items-center justify-center text-3xl shadow-lg flex-shrink-0">
+                🍽️
+              </div>
+            )}
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-black tracking-tight truncate">{DEMO_RESTAURANT.name}</h1>
+              <h1 className="text-2xl font-black tracking-tight truncate">{restaurant.name}</h1>
               <p className="text-emerald-100 text-xs flex items-center gap-1 mt-0.5">
                 <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-                <span className="truncate">{DEMO_RESTAURANT.address}</span>
+                <span className="truncate">{restaurant.address || 'Casablanca, Morocco'}</span>
               </p>
               {/* Rating + delivery meta */}
               <div className="flex items-center gap-3 mt-2 flex-wrap">
@@ -203,10 +164,10 @@ export default function CustomerMenuPage() {
                   <Star className="w-3 h-3 fill-amber-300 text-amber-300" /> 4.8
                 </span>
                 <span className="flex items-center gap-1 text-xs bg-white/20 rounded-full px-2 py-0.5 font-semibold">
-                  <Clock className="w-3 h-3" /> 20-35 min
+                  <Clock className="w-3 h-3" /> 25-40 min
                 </span>
                 <span className="flex items-center gap-1 text-xs bg-white/20 rounded-full px-2 py-0.5 font-semibold">
-                  <Zap className="w-3 h-3 text-amber-300" /> {DEMO_RESTAURANT.delivery_fee} DH delivery
+                  <Zap className="w-3 h-3 text-amber-300" /> {restaurant.delivery_fee === 0 ? 'Free' : `${restaurant.delivery_fee} ${restaurant.currency_symbol}`} delivery
                 </span>
                 <span className="text-xs bg-emerald-400/30 text-emerald-50 rounded-full px-2 py-0.5 font-bold border border-emerald-300/50">
                   ● Open Now
@@ -227,7 +188,7 @@ export default function CustomerMenuPage() {
             <input
               id="menu-search"
               type="text"
-              placeholder="Search tacos, burgers, drinks…"
+              placeholder="Search items..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="w-full bg-white text-slate-900 placeholder-slate-400 pl-10 pr-10 py-3 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-emerald-300 focus:outline-none shadow-md"
@@ -256,7 +217,7 @@ export default function CustomerMenuPage() {
             >
               All
             </button>
-            {DEMO_CATEGORIES.map(cat => (
+            {categories.map(cat => (
               <button
                 key={cat.id}
                 id={`cat-${cat.id}`}
@@ -346,7 +307,7 @@ export default function CustomerMenuPage() {
                   <p className="text-slate-500 text-xs line-clamp-2 leading-relaxed">{item.description}</p>
                   <div className="flex items-center gap-3 pt-1">
                     <span className="text-emerald-600 font-extrabold text-sm">
-                      {Number(item.base_price).toFixed(2)} {DEMO_RESTAURANT.currency_symbol}
+                      {Number(item.base_price).toFixed(2)} {restaurant.currency_symbol}
                     </span>
                     {ITEM_CALORIES[item.id] && (
                       <span className="flex items-center gap-1 text-[10px] text-slate-400 font-medium">
@@ -359,9 +320,13 @@ export default function CustomerMenuPage() {
 
                 {/* Image / Icon side */}
                 <div className="w-28 h-28 relative flex-shrink-0 self-center mr-3">
-                  <div className="w-full h-full rounded-xl bg-gradient-to-br from-emerald-50 to-teal-100 flex items-center justify-center text-4xl shadow-inner overflow-hidden">
-                    {ITEM_ICONS[item.id] || '🍽️'}
-                  </div>
+                  {item.image_url ? (
+                    <img src={item.image_url} alt={item.name} className="w-full h-full object-cover rounded-xl bg-slate-100" />
+                  ) : (
+                    <div className="w-full h-full rounded-xl bg-gradient-to-br from-emerald-50 to-teal-100 flex items-center justify-center text-4xl shadow-inner overflow-hidden">
+                      {ITEM_ICONS[item.id] || '🍽️'}
+                    </div>
+                  )}
                   {/* Favourite button */}
                   <button
                     id={`fav-${item.id}`}
@@ -403,7 +368,7 @@ export default function CustomerMenuPage() {
                 <span>View Order</span>
               </div>
               <span className="text-emerald-400 font-extrabold text-base">
-                {subtotal.toFixed(2)} {DEMO_RESTAURANT.currency_symbol}
+                {subtotal.toFixed(2)} {restaurant.currency_symbol}
               </span>
             </button>
           </div>
@@ -413,11 +378,11 @@ export default function CustomerMenuPage() {
       {/* ── Modals ──────────────────────────────────── */}
       <ItemModal
         item={activeModalItem}
-        currencySymbol={DEMO_RESTAURANT.currency_symbol}
+        currencySymbol={restaurant.currency_symbol}
         onClose={() => setActiveModalItem(null)}
       />
       <CartDrawer
-        restaurant={DEMO_RESTAURANT}
+        restaurant={restaurant}
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
       />

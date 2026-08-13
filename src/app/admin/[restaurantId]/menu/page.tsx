@@ -1,0 +1,232 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { Restaurant, Category, MenuItem } from "@/types";
+import { Store, Plus, Loader2, Save, Trash2 } from "lucide-react";
+import Link from "next/link";
+
+export default function AdminMenuPage({ params }: { params: { restaurantId: string } }) {
+  const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [items, setItems] = useState<MenuItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // New Category State
+  const [newCatName, setNewCatName] = useState("");
+
+  // New Item State
+  const [showItemForm, setShowItemForm] = useState(false);
+  const [newItem, setNewItem] = useState({
+    name: "",
+    description: "",
+    base_price: "0",
+    category_id: "",
+    image_url: "",
+  });
+
+  const fetchData = async () => {
+    setLoading(true);
+    const { data: rData } = await supabase.from("restaurants").select("*").eq("id", params.restaurantId).single();
+    if (rData) setRestaurant(rData);
+
+    const { data: cData } = await supabase.from("categories").select("*").eq("restaurant_id", params.restaurantId).order("display_order");
+    if (cData) setCategories(cData);
+
+    const { data: iData } = await supabase.from("menu_items").select("*").eq("restaurant_id", params.restaurantId).order("name");
+    if (iData) setItems(iData);
+
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.restaurantId]);
+
+  const handleAddCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCatName.trim()) return;
+
+    const id = crypto.randomUUID();
+    const { error } = await supabase.from("categories").insert({
+      id,
+      restaurant_id: params.restaurantId,
+      name: newCatName,
+      display_order: categories.length + 1,
+      is_active: true,
+    });
+
+    if (!error) {
+      setNewCatName("");
+      fetchData();
+    }
+  };
+
+  const handleAddItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newItem.name || !newItem.category_id) return;
+
+    const id = crypto.randomUUID();
+    const { error } = await supabase.from("menu_items").insert({
+      id,
+      restaurant_id: params.restaurantId,
+      category_id: newItem.category_id,
+      name: newItem.name,
+      description: newItem.description,
+      base_price: parseFloat(newItem.base_price) || 0,
+      image_url: newItem.image_url || null,
+      is_available: true,
+    });
+
+    if (!error) {
+      setShowItemForm(false);
+      setNewItem({ name: "", description: "", base_price: "0", category_id: "", image_url: "" });
+      fetchData();
+    }
+  };
+
+  const handleDeleteItem = async (id: string) => {
+    await supabase.from("menu_items").delete().eq("id", id);
+    fetchData();
+  };
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-indigo-600" /></div>;
+  }
+
+  if (!restaurant) {
+    return <div className="p-8">Restaurant not found.</div>;
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50 font-[Outfit]">
+      <header className="bg-white border-b border-slate-100 px-6 h-16 flex items-center justify-between sticky top-0 z-30">
+        <div className="flex items-center gap-3">
+          <Store className="w-6 h-6 text-indigo-600" />
+          <h1 className="font-black text-xl text-slate-900">{restaurant.name} - Menu Admin</h1>
+        </div>
+        <Link href={`/${restaurant.slug}`} className="text-sm font-bold text-indigo-600 hover:underline">
+          View Live Menu
+        </Link>
+      </header>
+
+      <main className="max-w-5xl mx-auto p-6 space-y-10">
+        {/* Categories Section */}
+        <section className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+          <h2 className="text-xl font-black text-slate-900 mb-6">Menu Categories</h2>
+          
+          <div className="flex flex-wrap gap-3 mb-6">
+            {categories.map(c => (
+              <div key={c.id} className="bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl text-sm font-bold text-slate-700">
+                {c.name}
+              </div>
+            ))}
+          </div>
+
+          <form onSubmit={handleAddCategory} className="flex gap-3 max-w-md">
+            <input
+              type="text"
+              required
+              placeholder="New Category Name"
+              value={newCatName}
+              onChange={(e) => setNewCatName(e.target.value)}
+              className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:border-indigo-600 font-medium"
+            />
+            <button type="submit" className="bg-indigo-600 text-white px-5 rounded-xl font-bold hover:bg-indigo-700 flex items-center gap-2">
+              <Plus className="w-4 h-4" /> Add
+            </button>
+          </form>
+        </section>
+
+        {/* Menu Items Section */}
+        <section className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-black text-slate-900">Menu Items</h2>
+            {!showItemForm && categories.length > 0 && (
+              <button onClick={() => setShowItemForm(true)} className="bg-indigo-600 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-indigo-700 text-sm">
+                <Plus className="w-4 h-4" /> Add Item
+              </button>
+            )}
+          </div>
+
+          {categories.length === 0 && (
+            <p className="text-slate-500 text-sm italic mb-6">Please add a category first before adding items.</p>
+          )}
+
+          {/* Add Item Form */}
+          {showItemForm && (
+            <form onSubmit={handleAddItem} className="bg-slate-50 p-5 rounded-2xl border border-slate-200 mb-8 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Item Name *</label>
+                  <input type="text" required value={newItem.name} onChange={(e) => setNewItem({...newItem, name: e.target.value})} className="w-full px-3 py-2 border rounded-xl" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Category *</label>
+                  <select required value={newItem.category_id} onChange={(e) => setNewItem({...newItem, category_id: e.target.value})} className="w-full px-3 py-2 border rounded-xl">
+                    <option value="">Select a category</option>
+                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Price (DH) *</label>
+                  <input type="number" step="0.01" required value={newItem.base_price} onChange={(e) => setNewItem({...newItem, base_price: e.target.value})} className="w-full px-3 py-2 border rounded-xl" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Image URL</label>
+                  <input type="url" value={newItem.image_url} onChange={(e) => setNewItem({...newItem, image_url: e.target.value})} className="w-full px-3 py-2 border rounded-xl" placeholder="https://..." />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Description</label>
+                  <textarea value={newItem.description} onChange={(e) => setNewItem({...newItem, description: e.target.value})} className="w-full px-3 py-2 border rounded-xl" rows={2}></textarea>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 justify-end pt-2">
+                <button type="button" onClick={() => setShowItemForm(false)} className="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-800">Cancel</button>
+                <button type="submit" className="px-5 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-indigo-700">
+                  <Save className="w-4 h-4" /> Save Item
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Items List */}
+          <div className="space-y-6">
+            {categories.map(cat => {
+              const catItems = items.filter(i => i.category_id === cat.id);
+              if (catItems.length === 0) return null;
+              
+              return (
+                <div key={cat.id}>
+                  <h3 className="font-bold text-slate-800 mb-3 border-b pb-2">{cat.name}</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {catItems.map(item => (
+                      <div key={item.id} className="flex gap-4 border border-slate-100 p-4 rounded-2xl bg-white shadow-sm group">
+                        {item.image_url ? (
+                          <img src={item.image_url} alt={item.name} className="w-20 h-20 object-cover rounded-xl bg-slate-100" />
+                        ) : (
+                          <div className="w-20 h-20 bg-slate-50 rounded-xl flex items-center justify-center text-2xl border border-slate-100">🍽️</div>
+                        )}
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between">
+                            <h4 className="font-bold text-slate-900">{item.name}</h4>
+                            <button onClick={() => handleDeleteItem(item.id)} className="text-slate-300 hover:text-red-500 transition-colors">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                          <p className="text-xs text-slate-500 line-clamp-2 mt-1 mb-2">{item.description}</p>
+                          <span className="font-black text-indigo-600 text-sm">{item.base_price.toFixed(2)} DH</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+}
