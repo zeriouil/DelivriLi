@@ -74,7 +74,7 @@ export default function SignupPage() {
         currency_symbol: "DH",
         delivery_fee: parseFloat(formData.delivery_fee) || 0,
         min_order_amount: parseFloat(formData.min_order_amount) || 0,
-        is_active: true, // Auto-activate for prototype
+        is_active: false, // Pending admin approval
       });
 
       if (insertError) throw insertError;

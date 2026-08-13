@@ -81,7 +81,12 @@ DROP POLICY IF EXISTS "Allow public delete menu_items" ON public.menu_items;
 CREATE POLICY "Allow public delete menu_items" ON public.menu_items FOR DELETE USING (true);
 
 DROP POLICY IF EXISTS "Allow public delete categories" ON public.categories;
+DROP POLICY IF EXISTS "Allow public delete categories" ON public.categories;
 CREATE POLICY "Allow public delete categories" ON public.categories FOR DELETE USING (true);
+
+-- Allow ANYONE to Update (For prototype Admin Approval)
+DROP POLICY IF EXISTS "Allow public update restaurants" ON public.restaurants;
+CREATE POLICY "Allow public update restaurants" ON public.restaurants FOR UPDATE USING (true);
 
 -- ==========================================
 -- UPDATE EXISTING TABLE (Run these if the table already exists!)

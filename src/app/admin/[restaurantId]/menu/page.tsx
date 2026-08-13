@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Restaurant, Category, MenuItem } from "@/types";
-import { Store, Plus, Loader2, Save, Trash2 } from "lucide-react";
+import { Store, Plus, Loader2, Save, Trash2, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 
 export default function AdminMenuPage({ params }: { params: { restaurantId: string } }) {
@@ -112,6 +112,18 @@ export default function AdminMenuPage({ params }: { params: { restaurantId: stri
       </header>
 
       <main className="max-w-5xl mx-auto p-6 space-y-10">
+        {!restaurant.is_active && (
+          <div className="bg-amber-50 border-l-4 border-amber-500 p-6 rounded-r-3xl shadow-sm flex items-start gap-4">
+            <AlertTriangle className="w-6 h-6 text-amber-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="text-amber-800 font-black text-lg mb-1">Your restaurant is pending approval</h3>
+              <p className="text-amber-700 text-sm font-medium">
+                You can build your menu now, but your restaurant will not appear on the DelivriLi marketplace until our team reviews and approves it.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Categories Section */}
         <section className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
           <h2 className="text-xl font-black text-slate-900 mb-6">Menu Categories</h2>
