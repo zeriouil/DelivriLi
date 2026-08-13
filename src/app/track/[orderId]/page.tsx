@@ -64,6 +64,8 @@ export default function OrderTrackingPage({ params }: { params: { orderId: strin
   const [showRating, setShowRating] = useState(false);
   const [rated, setRated] = useState(false);
 
+  const DELIVERY_ACTIVE_STATUSES = ['picked_up', 'out_for_delivery', 'arrived'];
+
   const fetchOrder = async () => {
     try {
       const { data, error } = await supabase
@@ -91,23 +93,47 @@ export default function OrderTrackingPage({ params }: { params: { orderId: strin
   useEffect(() => {
     fetchOrder();
 
-    // Realtime subscription — update status live
+    // Realtime subscription — update status live from Supabase
     const channel = supabase
       .channel(`order:${params.orderId}`)
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "orders", filter: `id=eq.${params.orderId}` },
         (payload) => {
-          setOrder(payload.new as Order);
-          // Show rating modal when order is completed
-          if ((payload.new as Order).status === "completed") {
+          const updated = payload.new as Order;
+          setOrder(updated);
+          // Keep local storage in sync
+          try {
+            localStorage.setItem(`local_order_${params.orderId}`, JSON.stringify(updated));
+          } catch {}
+          if (updated.status === "completed") {
             setTimeout(() => setShowRating(true), 1500);
           }
         }
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    // Poll localStorage every 3 seconds for local order status updates
+    const localPoll = setInterval(() => {
+      try {
+        const raw = localStorage.getItem(`local_order_${params.orderId}`);
+        if (raw) {
+          const local = JSON.parse(raw) as Order;
+          setOrder(prev => {
+            if (!prev || local.status !== prev.status) return local;
+            return prev;
+          });
+          if (local.status === 'completed' && !rated) {
+            setTimeout(() => setShowRating(true), 1500);
+          }
+        }
+      } catch {}
+    }, 3000);
+
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(localPoll);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.orderId]);
 
@@ -152,9 +178,12 @@ export default function OrderTrackingPage({ params }: { params: { orderId: strin
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6 space-y-4">
-        {/* Live map (only for delivery orders that are out for delivery) */}
-        {order.order_type === "delivery" && ["ready", "confirmed", "preparing"].includes(order.status) && (
-          <LiveTrackingMap deliveryAddress={order.delivery_address ?? ""} />
+        {/* Live map — shown when courier is actively delivering */}
+        {order.order_type === "delivery" && DELIVERY_ACTIVE_STATUSES.includes(order.status) && (
+          <LiveTrackingMap
+            deliveryAddress={order.delivery_address ?? ""}
+            orderStatus={order.status}
+          />
         )}
 
         {/* Status Timeline */}

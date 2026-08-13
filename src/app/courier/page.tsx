@@ -26,6 +26,15 @@ export default function CourierDashboard() {
   const alertedIds = useRef<Set<string>>(new Set());
   const watchIdRef = useRef<number | null>(null);
 
+  // Broadcast courier GPS to localStorage whenever position changes
+  // Customer tracking pages poll this to show real courier location on map
+  const broadcastPosition = (pos: [number, number]) => {
+    try {
+      const payload = JSON.stringify({ lat: pos[0], lng: pos[1], ts: Date.now() });
+      localStorage.setItem('courier_position', payload);
+    } catch {}
+  };
+
   // Start watching GPS — called only after user taps "Enable Location"
   const startLocationTracking = () => {
     setLocationState("requesting");
@@ -37,14 +46,19 @@ export default function CourierDashboard() {
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        // Permission granted — set state and begin continuous watch
-        setCourierPos([pos.coords.latitude, pos.coords.longitude]);
+        const latlng: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+        setCourierPos(latlng);
+        broadcastPosition(latlng);
         setLocationState("granted");
 
         watchIdRef.current = navigator.geolocation.watchPosition(
-          (p) => setCourierPos([p.coords.latitude, p.coords.longitude]),
+          (p) => {
+            const updated: [number, number] = [p.coords.latitude, p.coords.longitude];
+            setCourierPos(updated);
+            broadcastPosition(updated);
+          },
           () => {},
-          { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+          { enableHighAccuracy: true, maximumAge: 3000, timeout: 10000 }
         );
       },
       () => {
