@@ -65,30 +65,58 @@ export default function CourierDashboard() {
 
   // Fetch ALL delivery orders (for heatmap)
   const fetchAllOrders = useCallback(async () => {
-    const { data } = await supabase
-      .from("orders")
-      .select("*")
-      .eq("order_type", "delivery")
-      .in("status", ["pending", "confirmed", "preparing", "ready"])
-      .order("created_at", { ascending: false })
-      .limit(50);
-    setAllOrders(data || []);
+    let dbOrders: Order[] = [];
+    try {
+      const { data } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("order_type", "delivery")
+        .in("status", ["pending", "confirmed", "preparing", "ready"])
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (data) dbOrders = data;
+    } catch {}
+
+    let localOrders: Order[] = [];
+    try {
+      localOrders = (JSON.parse(localStorage.getItem('local_orders_list') || '[]') as Order[])
+        .filter(o => o.order_type === 'delivery' && ["pending", "confirmed", "preparing", "ready"].includes(o.status));
+    } catch {}
+
+    const map = new Map<string, Order>();
+    [...dbOrders, ...localOrders].forEach(o => map.set(o.id, o));
+    setAllOrders(Array.from(map.values()));
   }, []);
 
-  // Fetch READY orders (job list)
+  // Fetch READY orders (trigger popup alert for newest ready order)
   const fetchReadyDeliveries = useCallback(async () => {
-    const { data } = await supabase
-      .from("orders")
-      .select("*")
-      .eq("order_type", "delivery")
-      .eq("status", "ready")
-      .order("updated_at", { ascending: false });
+    let dbOrders: Order[] = [];
+    try {
+      const { data } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("order_type", "delivery")
+        .eq("status", "ready")
+        .order("updated_at", { ascending: false });
+      if (data) dbOrders = data;
+    } catch {}
 
-    const orders: Order[] = data || [];
-    setReadyDeliveries(orders);
+    let localOrders: Order[] = [];
+    try {
+      localOrders = (JSON.parse(localStorage.getItem('local_orders_list') || '[]') as Order[])
+        .filter(o => o.order_type === 'delivery' && o.status === 'ready');
+    } catch {}
 
-    if (isOnline && orders.length > 0) {
-      const newest = orders[0];
+    const map = new Map<string, Order>();
+    [...dbOrders, ...localOrders].forEach(o => map.set(o.id, o));
+    const combined = Array.from(map.values()).sort(
+      (a, b) => new Date(b.updated_at || b.created_at).getTime() - new Date(a.updated_at || a.created_at).getTime()
+    );
+
+    setReadyDeliveries(combined);
+
+    if (isOnline && combined.length > 0) {
+      const newest = combined[0];
       if (!alertedIds.current.has(newest.id)) {
         alertedIds.current.add(newest.id);
         setIncomingJob(newest);
@@ -96,13 +124,12 @@ export default function CourierDashboard() {
     }
   }, [isOnline]);
 
-  // Start fetching and realtime only after location is granted
+  // Start fetching, polling & realtime when online / location active
   useEffect(() => {
-    if (locationState !== "granted") return;
-
     fetchAllOrders();
     fetchReadyDeliveries();
 
+    // 1. Supabase channel
     const channel = supabase
       .channel("courier:orders")
       .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => {
@@ -111,7 +138,24 @@ export default function CourierDashboard() {
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    // 2. Storage event listener (multi-tab sync)
+    const handleStorage = () => {
+      fetchAllOrders();
+      fetchReadyDeliveries();
+    };
+    window.addEventListener('storage', handleStorage);
+
+    // 3. Fast polling every 2 seconds for local changes
+    const pollInterval = setInterval(() => {
+      fetchReadyDeliveries();
+      fetchAllOrders();
+    }, 2000);
+
+    return () => {
+      supabase.removeChannel(channel);
+      window.removeEventListener('storage', handleStorage);
+      clearInterval(pollInterval);
+    };
   }, [locationState, fetchAllOrders, fetchReadyDeliveries]);
 
   const handleAccept = () => { setIncomingJob(null); setJobListOpen(true); };
@@ -236,9 +280,33 @@ export default function CourierDashboard() {
     );
   }
 
+  const triggerTestJobAlert = () => {
+    const testId = `ord-${Date.now()}`;
+    const testOrder: Order = {
+      id: testId,
+      restaurant_id: "00000000-0000-0000-0000-000000000001",
+      order_number: Math.floor(1000 + Math.random() * 9000),
+      customer_name: "Karim Benali",
+      customer_phone: "+212 6 12 34 56 78",
+      order_type: "delivery",
+      delivery_address: "Boulevard Mohamed V, Casablanca",
+      notes: "Ring bell #4, 2nd floor.",
+      subtotal: 140.00,
+      delivery_fee: 15.00,
+      total_amount: 155.00,
+      status: "ready",
+      whatsapp_sent: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    alertedIds.current.add(testId);
+    setReadyDeliveries(prev => [testOrder, ...prev]);
+    setIncomingJob(testOrder);
+  };
+
   // ── MAIN COURIER DASHBOARD (location granted) ─────────────────────────────
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-slate-900">
+    <div className="relative w-screen h-screen overflow-hidden bg-slate-900 font-[Outfit]">
 
       {/* Fullscreen heatmap */}
       <div className="absolute inset-0 z-0">
@@ -252,17 +320,26 @@ export default function CourierDashboard() {
             <Bike className="w-5 h-5 text-indigo-400" />
             <span className="text-white font-bold tracking-tight">Courier</span>
           </div>
-          <button
-            onClick={() => setIsOnline((v) => !v)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-sm transition-all backdrop-blur-md border ${
-              isOnline
-                ? "bg-emerald-500/90 border-emerald-400/30 text-white shadow-lg shadow-emerald-500/30"
-                : "bg-slate-800/80 border-white/10 text-white/50"
-            }`}
-          >
-            {isOnline ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
-            {isOnline ? "Online" : "Offline"}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              id="test-job-alert"
+              onClick={triggerTestJobAlert}
+              className="flex items-center gap-1.5 px-3 py-2.5 rounded-2xl font-bold text-xs bg-indigo-600/90 hover:bg-indigo-500 text-white border border-indigo-400/30 backdrop-blur-md shadow-lg shadow-indigo-600/30 transition-all active:scale-95"
+            >
+              ⚡ Test Job Popup
+            </button>
+            <button
+              onClick={() => setIsOnline((v) => !v)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-sm transition-all backdrop-blur-md border ${
+                isOnline
+                  ? "bg-emerald-500/90 border-emerald-400/30 text-white shadow-lg shadow-emerald-500/30"
+                  : "bg-slate-800/80 border-white/10 text-white/50"
+              }`}
+            >
+              {isOnline ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
+              {isOnline ? "Online" : "Offline"}
+            </button>
+          </div>
         </div>
       </div>
 
