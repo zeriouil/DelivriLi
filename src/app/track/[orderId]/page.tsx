@@ -64,7 +64,7 @@ export default function OrderTrackingPage({ params }: { params: { orderId: strin
   const [showRating, setShowRating] = useState(false);
   const [rated, setRated] = useState(false);
 
-  const DELIVERY_ACTIVE_STATUSES = ['picked_up', 'out_for_delivery', 'arrived'];
+  const DELIVERY_ACTIVE_STATUSES = ['pending', 'confirmed', 'preparing', 'ready', 'picked_up', 'out_for_delivery', 'arrived'];
 
   const fetchOrder = async () => {
     try {

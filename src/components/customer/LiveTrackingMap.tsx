@@ -204,7 +204,11 @@ export function LiveTrackingMap({ deliveryAddress, orderStatus }: LiveTrackingMa
           isLive ? "bg-white/90 text-slate-700" : "bg-white/70 text-slate-400"
         }`}>
           <span className={`w-2 h-2 rounded-full ${isLive ? "bg-emerald-500 animate-pulse" : "bg-slate-300"}`} />
-          {isLive ? statusLabel : "Locating courier…"}
+          {isLive ? statusLabel : (
+            ['pending', 'confirmed', 'preparing', 'ready'].includes(orderStatus || '')
+              ? "Awaiting courier assignment…"
+              : "Locating courier…"
+          )}
         </div>
       </div>
 
