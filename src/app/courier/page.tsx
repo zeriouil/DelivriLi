@@ -1,0 +1,338 @@
+"use client";
+
+import dynamic from "next/dynamic";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { Order } from "@/types";
+import { NewJobAlert } from "@/components/courier/NewJobAlert";
+import { DeliveryJobCard } from "@/components/courier/DeliveryJobCard";
+import { Bike, ChevronUp, X, Wifi, WifiOff, MapPin, ShieldCheck, AlertTriangle } from "lucide-react";
+
+const HeatMap = dynamic(
+  () => import("@/components/courier/HeatMap").then((m) => m.HeatMap),
+  { ssr: false, loading: () => <div className="w-full h-full bg-slate-900" /> }
+);
+
+type LocationState = "idle" | "requesting" | "granted" | "denied";
+
+export default function CourierDashboard() {
+  const [locationState, setLocationState] = useState<LocationState>("idle");
+  const [allOrders, setAllOrders] = useState<Order[]>([]);
+  const [readyDeliveries, setReadyDeliveries] = useState<Order[]>([]);
+  const [incomingJob, setIncomingJob] = useState<Order | null>(null);
+  const [courierPos, setCourierPos] = useState<[number, number] | null>(null);
+  const [isOnline, setIsOnline] = useState(true);
+  const [jobListOpen, setJobListOpen] = useState(false);
+  const alertedIds = useRef<Set<string>>(new Set());
+  const watchIdRef = useRef<number | null>(null);
+
+  // Start watching GPS — called only after user taps "Enable Location"
+  const startLocationTracking = () => {
+    setLocationState("requesting");
+
+    if (!navigator.geolocation) {
+      setLocationState("denied");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        // Permission granted — set state and begin continuous watch
+        setCourierPos([pos.coords.latitude, pos.coords.longitude]);
+        setLocationState("granted");
+
+        watchIdRef.current = navigator.geolocation.watchPosition(
+          (p) => setCourierPos([p.coords.latitude, p.coords.longitude]),
+          () => {},
+          { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+        );
+      },
+      () => {
+        setLocationState("denied");
+      },
+      { enableHighAccuracy: true, timeout: 12000 }
+    );
+  };
+
+  // Cleanup watch on unmount
+  useEffect(() => {
+    return () => {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+      }
+    };
+  }, []);
+
+  // Fetch ALL delivery orders (for heatmap)
+  const fetchAllOrders = useCallback(async () => {
+    const { data } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("order_type", "delivery")
+      .in("status", ["pending", "confirmed", "preparing", "ready"])
+      .order("created_at", { ascending: false })
+      .limit(50);
+    setAllOrders(data || []);
+  }, []);
+
+  // Fetch READY orders (job list)
+  const fetchReadyDeliveries = useCallback(async () => {
+    const { data } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("order_type", "delivery")
+      .eq("status", "ready")
+      .order("updated_at", { ascending: false });
+
+    const orders: Order[] = data || [];
+    setReadyDeliveries(orders);
+
+    if (isOnline && orders.length > 0) {
+      const newest = orders[0];
+      if (!alertedIds.current.has(newest.id)) {
+        alertedIds.current.add(newest.id);
+        setIncomingJob(newest);
+      }
+    }
+  }, [isOnline]);
+
+  // Start fetching and realtime only after location is granted
+  useEffect(() => {
+    if (locationState !== "granted") return;
+
+    fetchAllOrders();
+    fetchReadyDeliveries();
+
+    const channel = supabase
+      .channel("courier:orders")
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => {
+        fetchAllOrders();
+        fetchReadyDeliveries();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [locationState, fetchAllOrders, fetchReadyDeliveries]);
+
+  const handleAccept = () => { setIncomingJob(null); setJobListOpen(true); };
+  const handleDecline = (orderId: string) => {
+    setIncomingJob(null);
+    setReadyDeliveries((prev) => prev.filter((o) => o.id !== orderId));
+  };
+  const handleMarkDelivered = async (orderId: string) => {
+    try {
+      const { error } = await supabase.from("orders").update({ status: "completed" }).eq("id", orderId);
+      if (error) throw error;
+      setReadyDeliveries((cur) => cur.filter((o) => o.id !== orderId));
+      setAllOrders((cur) => cur.filter((o) => o.id !== orderId));
+    } catch { alert("Failed to update delivery status"); }
+  };
+
+  // ── LOCATION GATE SCREENS ─────────────────────────────────────────────────
+  if (locationState === "idle" || locationState === "requesting" || locationState === "denied") {
+    return (
+      <div className="w-screen h-screen bg-slate-950 flex flex-col items-center justify-between px-6 pt-20 pb-14 overflow-hidden">
+
+        {/* Background decoration */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl" />
+          <div className="absolute top-1/2 left-1/3 w-64 h-64 bg-emerald-600/5 rounded-full blur-3xl" />
+        </div>
+
+        {/* Top: branding */}
+        <div className="flex flex-col items-center gap-2 z-10">
+          <div className="w-16 h-16 bg-indigo-600 rounded-3xl flex items-center justify-center shadow-2xl shadow-indigo-600/40 mb-2">
+            <Bike className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-white text-2xl font-black tracking-tight">Courier App</h1>
+          <p className="text-white/40 text-sm font-medium">Powered by Digital Menu PWA</p>
+        </div>
+
+        {/* Center: illustration + explanation */}
+        <div className="flex flex-col items-center gap-6 z-10 text-center max-w-xs">
+          {locationState === "denied" ? (
+            <>
+              <div className="w-24 h-24 bg-red-500/10 border border-red-500/20 rounded-3xl flex items-center justify-center">
+                <AlertTriangle className="w-12 h-12 text-red-400" />
+              </div>
+              <div>
+                <h2 className="text-white text-xl font-black mb-2">Location Access Denied</h2>
+                <p className="text-white/50 text-sm leading-relaxed">
+                  We need your location to show you on the map and calculate distances to customers.
+                  Please enable location in your browser settings, then try again.
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Animated location pulse illustration */}
+              <div className="relative w-32 h-32 flex items-center justify-center">
+                <div className={`absolute w-32 h-32 rounded-full bg-indigo-500/10 ${locationState === "requesting" ? "animate-ping" : ""}`} />
+                <div className={`absolute w-20 h-20 rounded-full bg-indigo-500/20 ${locationState === "requesting" ? "animate-pulse" : ""}`} />
+                <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-xl shadow-indigo-600/50 z-10">
+                  <MapPin className="w-6 h-6 text-white" />
+                </div>
+              </div>
+
+              <div>
+                <h2 className="text-white text-xl font-black mb-2">
+                  {locationState === "requesting" ? "Requesting Access…" : "Enable Your Location"}
+                </h2>
+                <p className="text-white/50 text-sm leading-relaxed">
+                  {locationState === "requesting"
+                    ? "Please allow location access when your browser asks."
+                    : "To go online and receive delivery orders, we need access to your GPS location."}
+                </p>
+              </div>
+
+              {/* Feature bullets */}
+              {locationState === "idle" && (
+                <div className="w-full space-y-3 mt-2">
+                  {[
+                    { icon: "🗺️", text: "See your position on the live demand map" },
+                    { icon: "📍", text: "Calculate distance to each delivery" },
+                    { icon: "🛵", text: "Get matched with nearby orders" },
+                  ].map(({ icon, text }) => (
+                    <div key={text} className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-left">
+                      <span className="text-xl">{icon}</span>
+                      <span className="text-white/70 text-sm font-medium">{text}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Bottom: CTA button */}
+        <div className="w-full z-10 flex flex-col gap-3">
+          {locationState === "denied" ? (
+            <button
+              onClick={startLocationTracking}
+              className="w-full py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-lg flex items-center justify-center gap-2 transition-colors active:scale-[0.98] shadow-xl shadow-indigo-600/30"
+            >
+              <MapPin className="w-5 h-5" />
+              Try Again
+            </button>
+          ) : locationState === "requesting" ? (
+            <div className="w-full py-4 rounded-2xl bg-slate-800 border border-white/10 text-white/40 font-bold text-lg flex items-center justify-center gap-3">
+              <div className="w-5 h-5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+              Waiting for permission…
+            </div>
+          ) : (
+            <button
+              onClick={startLocationTracking}
+              className="w-full py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-black text-lg flex items-center justify-center gap-2 transition-colors active:scale-[0.98] shadow-xl shadow-emerald-500/30"
+            >
+              <ShieldCheck className="w-5 h-5" />
+              Enable Location &amp; Go Online
+            </button>
+          )}
+          <p className="text-white/25 text-xs text-center">
+            Your location is only used while you are actively using this app.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── MAIN COURIER DASHBOARD (location granted) ─────────────────────────────
+  return (
+    <div className="relative w-screen h-screen overflow-hidden bg-slate-900">
+
+      {/* Fullscreen heatmap */}
+      <div className="absolute inset-0 z-0">
+        <HeatMap orders={allOrders} courierPosition={courierPos} />
+      </div>
+
+      {/* Floating top bar */}
+      <div className="absolute top-0 left-0 right-0 z-20 pt-12 px-4 pb-4 pointer-events-none">
+        <div className="flex items-center justify-between pointer-events-auto">
+          <div className="flex items-center gap-2 bg-slate-900/70 backdrop-blur-md border border-white/10 px-4 py-2.5 rounded-2xl">
+            <Bike className="w-5 h-5 text-indigo-400" />
+            <span className="text-white font-bold tracking-tight">Courier</span>
+          </div>
+          <button
+            onClick={() => setIsOnline((v) => !v)}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-sm transition-all backdrop-blur-md border ${
+              isOnline
+                ? "bg-emerald-500/90 border-emerald-400/30 text-white shadow-lg shadow-emerald-500/30"
+                : "bg-slate-800/80 border-white/10 text-white/50"
+            }`}
+          >
+            {isOnline ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
+            {isOnline ? "Online" : "Offline"}
+          </button>
+        </div>
+      </div>
+
+      {/* Map legend */}
+      <div className="absolute top-32 left-4 z-20 bg-slate-900/75 backdrop-blur-md border border-white/10 rounded-2xl px-4 py-3">
+        <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest mb-2">Demand</p>
+        {[
+          { color: "bg-red-400", label: "Ready" },
+          { color: "bg-orange-400", label: "Preparing" },
+          { color: "bg-yellow-400", label: "Confirmed" },
+          { color: "bg-cyan-400", label: "New" },
+        ].map(({ color, label }) => (
+          <div key={label} className="flex items-center gap-2 mb-1.5 last:mb-0">
+            <span className={`w-2.5 h-2.5 rounded-full ${color}`} />
+            <span className="text-white/70 text-xs font-medium">{label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Bottom jobs panel */}
+      <div
+        className={`absolute left-0 right-0 z-20 transition-all duration-500 ease-out ${
+          jobListOpen ? "bottom-0" : "-bottom-[calc(100vh-160px)]"
+        }`}
+        style={{ top: jobListOpen ? "30%" : undefined }}
+      >
+        <button
+          onClick={() => setJobListOpen((v) => !v)}
+          className="w-full flex items-center justify-between bg-slate-900/90 backdrop-blur-xl border-t border-white/10 px-6 py-4 rounded-t-3xl"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-white font-black text-base">Active Jobs</span>
+            {readyDeliveries.length > 0 && (
+              <span className="bg-red-500 text-white text-xs font-black px-2.5 py-0.5 rounded-full animate-pulse">
+                {readyDeliveries.length}
+              </span>
+            )}
+          </div>
+          {jobListOpen ? <X className="w-5 h-5 text-white/60" /> : <ChevronUp className="w-5 h-5 text-white/60" />}
+        </button>
+        <div className="bg-slate-900/95 backdrop-blur-xl overflow-y-auto px-4 pb-10 space-y-4" style={{ maxHeight: "70vh" }}>
+          {readyDeliveries.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-2xl mb-2">🛵</p>
+              <p className="text-white/60 font-medium">Waiting for new jobs…</p>
+              <p className="text-white/30 text-sm mt-1">Orders will appear here when ready</p>
+            </div>
+          ) : (
+            readyDeliveries.map((order) => (
+              <DeliveryJobCard key={order.id} order={order} onMarkDelivered={handleMarkDelivered} />
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Collapsed jobs FAB */}
+      {!jobListOpen && readyDeliveries.length > 0 && (
+        <button
+          onClick={() => setJobListOpen(true)}
+          className="absolute bottom-28 right-4 z-30 bg-red-500 hover:bg-red-400 text-white font-black rounded-2xl px-5 py-3.5 shadow-xl shadow-red-500/40 flex items-center gap-2 active:scale-95 transition-all"
+        >
+          <ChevronUp className="w-5 h-5" />
+          {readyDeliveries.length} Job{readyDeliveries.length > 1 ? "s" : ""}
+        </button>
+      )}
+
+      {/* Incoming job alert */}
+      {incomingJob && isOnline && (
+        <NewJobAlert order={incomingJob} onAccept={handleAccept} onDecline={handleDecline} timeoutSeconds={30} courierPosition={courierPos} />
+      )}
+    </div>
+  );
+}
