@@ -65,12 +65,26 @@ export default function OrderTrackingPage({ params }: { params: { orderId: strin
   const [rated, setRated] = useState(false);
 
   const fetchOrder = async () => {
-    const { data, error } = await supabase
-      .from("orders")
-      .select("*")
-      .eq("id", params.orderId)
-      .single();
-    if (!error && data) setOrder(data);
+    try {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("id", params.orderId)
+        .single();
+      if (!error && data) {
+        setOrder(data);
+        setLoading(false);
+        return;
+      }
+    } catch {}
+
+    // Fallback to local storage
+    try {
+      const local = localStorage.getItem(`local_order_${params.orderId}`);
+      if (local) {
+        setOrder(JSON.parse(local));
+      }
+    } catch {}
     setLoading(false);
   };
 

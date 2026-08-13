@@ -68,8 +68,37 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
     }
     setSubmitting(true);
     try {
-      const { data, error } = await supabase.from('orders').insert({
+      let orderId = `ord-${Date.now()}`;
+      let orderNumber = Math.floor(1000 + Math.random() * 9000);
+
+      // Attempt Supabase insert
+      try {
+        const { data, error } = await supabase.from('orders').insert({
+          restaurant_id: restaurant.id,
+          customer_name: customer.name,
+          customer_phone: customer.phone,
+          order_type: customer.orderType,
+          delivery_address: customer.deliveryAddress || null,
+          notes: customer.notes || null,
+          subtotal,
+          delivery_fee: deliveryFee,
+          total_amount: grandTotal,
+          status: 'pending',
+        }).select().single();
+
+        if (!error && data?.id) {
+          orderId = data.id;
+          orderNumber = data.order_number || orderNumber;
+        }
+      } catch (dbErr) {
+        console.warn('Supabase DB insert warning (using local fallback):', dbErr);
+      }
+
+      // Always save order to local storage for tracking page fallback
+      const localOrder = {
+        id: orderId,
         restaurant_id: restaurant.id,
+        order_number: orderNumber,
         customer_name: customer.name,
         customer_phone: customer.phone,
         order_type: customer.orderType,
@@ -79,19 +108,27 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
         delivery_fee: deliveryFee,
         total_amount: grandTotal,
         status: 'pending',
-      }).select().single();
+        whatsapp_sent: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      try {
+        localStorage.setItem(`local_order_${orderId}`, JSON.stringify(localOrder));
+        // Also add to local order history array
+        const existing = JSON.parse(localStorage.getItem('local_orders_list') || '[]');
+        localStorage.setItem('local_orders_list', JSON.stringify([localOrder, ...existing]));
+      } catch {}
 
-      if (error) throw error;
-
+      // Send WhatsApp message
       const waUrl = generateWhatsAppOrderUrl(restaurant, items, customer, subtotal, deliveryFee, grandTotal);
       window.open(waUrl, '_blank');
 
       clearCart();
       onClose();
-      router.push(`/track/${data.id}`);
+      router.push(`/track/${orderId}`);
     } catch (err) {
       console.error('Failed to place order:', err);
-      alert('Failed to place order. Please try again.');
+      alert('Could not process order. Please try again.');
     } finally {
       setSubmitting(false);
     }

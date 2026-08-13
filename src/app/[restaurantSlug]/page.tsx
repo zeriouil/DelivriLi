@@ -12,7 +12,7 @@ import { CartDrawer } from '@/components/cart/cart-drawer';
 
 /* ────── Demo Data ────────────────────────────────────── */
 const DEMO_RESTAURANT: Restaurant = {
-  id: 'r1',
+  id: '00000000-0000-0000-0000-000000000001',
   slug: 'taco-barn',
   name: 'Taco Barn Casa',
   phone_number: '212612345678',

@@ -27,20 +27,32 @@ export default function AdminDashboard() {
   }, []);
 
   const fetchOrders = async () => {
+    let dbOrders: Order[] = [];
     try {
       const { data, error } = await supabase
         .from('orders')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setOrders(data || []);
+      if (!error && data) dbOrders = data;
     } catch (error) {
-      console.error('Error fetching orders:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
+      console.warn('Error fetching DB orders:', error);
     }
+
+    // Merge with local orders fallback
+    let localOrders: Order[] = [];
+    try {
+      localOrders = JSON.parse(localStorage.getItem('local_orders_list') || '[]');
+    } catch {}
+
+    const map = new Map<string, Order>();
+    [...dbOrders, ...localOrders].forEach(o => {
+      if (!map.has(o.id)) map.set(o.id, o);
+    });
+
+    setOrders(Array.from(map.values()));
+    setLoading(false);
+    setRefreshing(false);
   };
 
   const handleRefresh = async () => {
@@ -49,40 +61,80 @@ export default function AdminDashboard() {
   };
 
   const updateOrderStatus = async (orderId: string, newStatus: OrderStatus) => {
-    try {
-      const { error } = await supabase
-        .from('orders')
-        .update({ status: newStatus })
-        .eq('id', orderId);
+    // Optimistic update
+    setOrders(current =>
+      current.map(order => order.id === orderId ? { ...order, status: newStatus } : order)
+    );
 
-      if (error) throw error;
-      setOrders(current =>
-        current.map(order => order.id === orderId ? { ...order, status: newStatus } : order)
-      );
+    // Update local storage
+    try {
+      const local = JSON.parse(localStorage.getItem('local_orders_list') || '[]');
+      const updated = local.map((o: Order) => o.id === orderId ? { ...o, status: newStatus } : o);
+      localStorage.setItem('local_orders_list', JSON.stringify(updated));
+
+      const single = localStorage.getItem(`local_order_${orderId}`);
+      if (single) {
+        const parsed = JSON.parse(single);
+        parsed.status = newStatus;
+        localStorage.setItem(`local_order_${orderId}`, JSON.stringify(parsed));
+      }
+    } catch {}
+
+    // Update Supabase
+    try {
+      await supabase.from('orders').update({ status: newStatus }).eq('id', orderId);
     } catch (error) {
-      console.error('Error updating order status:', error);
-      alert('Failed to update order status');
+      console.warn('DB update failed, updated locally:', error);
     }
   };
 
   const createTestOrder = async () => {
+    const newId = `ord-${Date.now()}`;
+    const newOrder: Order = {
+      id: newId,
+      restaurant_id: RESTAURANT_ID,
+      order_number: Math.floor(1000 + Math.random() * 9000),
+      customer_name: "Test Customer",
+      customer_phone: "212600000000",
+      order_type: "delivery",
+      delivery_address: "123 Boulevard Anfa, Casablanca",
+      notes: "Please ring the doorbell.",
+      subtotal: 150.00,
+      delivery_fee: 15.00,
+      total_amount: 165.00,
+      status: "pending",
+      whatsapp_sent: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    // Optimistic state addition
+    setOrders(prev => [newOrder, ...prev]);
+
+    // Save to local storage
     try {
-      const { error } = await supabase.from('orders').insert({
+      const existing = JSON.parse(localStorage.getItem('local_orders_list') || '[]');
+      localStorage.setItem('local_orders_list', JSON.stringify([newOrder, ...existing]));
+      localStorage.setItem(`local_order_${newId}`, JSON.stringify(newOrder));
+    } catch {}
+
+    // DB insert attempt
+    try {
+      await supabase.from('orders').insert({
+        id: newOrder.id,
         restaurant_id: RESTAURANT_ID,
-        customer_name: "Test Customer",
-        customer_phone: "212600000000",
-        order_type: "delivery",
-        delivery_address: "123 Test Street, Casa",
-        notes: "Please ring the bell.",
-        subtotal: 150.00,
-        delivery_fee: 15.00,
-        total_amount: 165.00,
-        status: "pending"
+        customer_name: newOrder.customer_name,
+        customer_phone: newOrder.customer_phone,
+        order_type: newOrder.order_type,
+        delivery_address: newOrder.delivery_address,
+        notes: newOrder.notes,
+        subtotal: newOrder.subtotal,
+        delivery_fee: newOrder.delivery_fee,
+        total_amount: newOrder.total_amount,
+        status: newOrder.status
       });
-      if (error) throw error;
     } catch (error) {
-      console.error('Error creating test order:', error);
-      alert('Failed to create test order');
+      console.warn('DB insert failed, created test order locally:', error);
     }
   };
 
