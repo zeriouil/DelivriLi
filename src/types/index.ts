@@ -10,6 +10,7 @@ export interface Restaurant {
   delivery_fee: number;
   min_order_amount: number;
   is_active: boolean;
+  created_at?: string;
 }
 
 export interface Category {

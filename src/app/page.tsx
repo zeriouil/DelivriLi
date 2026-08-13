@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { Restaurant } from "@/types";
-import { Search, MapPin, Star, ArrowRight, Store, ArrowUpRight } from "lucide-react";
+import { Search, MapPin, Star, ArrowRight, Store, ArrowUpRight, Flame } from "lucide-react";
 
 export default async function MarketplacePage() {
   // Fetch active restaurants from Supabase
@@ -68,7 +68,12 @@ export default async function MarketplacePage() {
 
         {restaurants && restaurants.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {restaurants.map((restaurant: Restaurant) => (
+            {restaurants.map((restaurant: Restaurant) => {
+              const isNew = restaurant.created_at
+                ? (new Date().getTime() - new Date(restaurant.created_at).getTime()) < 7 * 24 * 60 * 60 * 1000
+                : false;
+              
+              return (
               <Link
                 key={restaurant.id}
                 href={`/${restaurant.slug}`}
@@ -87,9 +92,16 @@ export default async function MarketplacePage() {
                       <Store className="w-12 h-12 text-indigo-300" />
                     </div>
                   )}
-                  {/* Delivery time badge */}
-                  <div className="absolute bottom-3 right-3 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-slate-700 shadow-sm">
-                    25-40 min
+                  {/* Delivery time & New badges */}
+                  <div className="absolute bottom-3 right-3 flex items-center gap-2">
+                    {isNew && (
+                      <div className="bg-rose-500/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-black text-white shadow-sm flex items-center gap-1 animate-pulse">
+                        <Flame className="w-3.5 h-3.5" /> NEW
+                      </div>
+                    )}
+                    <div className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-slate-700 shadow-sm">
+                      25-40 min
+                    </div>
                   </div>
                 </div>
 
@@ -128,7 +140,7 @@ export default async function MarketplacePage() {
                   </div>
                 </div>
               </Link>
-            ))}
+            )})}
           </div>
         ) : (
           <div className="bg-white border border-slate-100 rounded-3xl p-12 text-center">
