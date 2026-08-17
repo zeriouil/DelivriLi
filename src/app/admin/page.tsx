@@ -60,29 +60,40 @@ export default function AdminDashboard() {
     await fetchOrders();
   };
 
-  const updateOrderStatus = async (orderId: string, newStatus: OrderStatus) => {
-    // Optimistic update
+  const updateOrderStatus = async (
+    orderId: string,
+    newStatus: OrderStatus,
+    extra?: { estimated_prep_minutes?: number; ready_at?: string }
+  ) => {
+    // Merge extra fields into the patch object
+    const patch = { status: newStatus, ...extra };
+
+    // Optimistic update — merge extra into order state immediately
     setOrders(current =>
-      current.map(order => order.id === orderId ? { ...order, status: newStatus } : order)
+      current.map(order =>
+        order.id === orderId ? { ...order, ...patch } : order
+      )
     );
 
     // Update local storage
     try {
       const local = JSON.parse(localStorage.getItem('local_orders_list') || '[]');
-      const updated = local.map((o: Order) => o.id === orderId ? { ...o, status: newStatus } : o);
+      const updated = local.map((o: Order) =>
+        o.id === orderId ? { ...o, ...patch } : o
+      );
       localStorage.setItem('local_orders_list', JSON.stringify(updated));
 
       const single = localStorage.getItem(`local_order_${orderId}`);
       if (single) {
         const parsed = JSON.parse(single);
-        parsed.status = newStatus;
+        Object.assign(parsed, patch);
         localStorage.setItem(`local_order_${orderId}`, JSON.stringify(parsed));
       }
     } catch {}
 
-    // Update Supabase
+    // Update Supabase (includes estimated_prep_minutes + ready_at if provided)
     try {
-      await supabase.from('orders').update({ status: newStatus }).eq('id', orderId);
+      await supabase.from('orders').update(patch).eq('id', orderId);
     } catch (error) {
       console.warn('DB update failed, updated locally:', error);
     }

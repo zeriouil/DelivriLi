@@ -112,6 +112,10 @@ export interface Order {
   total_amount: number;
   status: OrderStatus;
   whatsapp_sent: boolean;
+  /** Minutes until the order is ready (set by staff when accepting) */
+  estimated_prep_minutes?: number | null;
+  /** ISO timestamp when the order should be ready (computed from acceptance time + prep minutes) */
+  ready_at?: string | null;
   created_at: string;
   updated_at: string;
 }

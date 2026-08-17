@@ -16,8 +16,11 @@ ALTER TABLE public.restaurants
 
 -- Add geography point to orders for customer drop-off coordinates.
 ALTER TABLE public.orders
-  ADD COLUMN IF NOT EXISTS pickup_location  geography(POINT, 4326),
-  ADD COLUMN IF NOT EXISTS dropoff_location geography(POINT, 4326);
+  ADD COLUMN IF NOT EXISTS pickup_location       geography(POINT, 4326),
+  ADD COLUMN IF NOT EXISTS dropoff_location      geography(POINT, 4326),
+  -- Staff-set prep time (set when order is accepted via PrepTimePopup)
+  ADD COLUMN IF NOT EXISTS estimated_prep_minutes INTEGER,
+  ADD COLUMN IF NOT EXISTS ready_at              TIMESTAMPTZ;
 
 -- ── 2. Couriers Table ─────────────────────────────────────────────────────────
 -- Represents a delivery courier (linked to Supabase Auth user).
