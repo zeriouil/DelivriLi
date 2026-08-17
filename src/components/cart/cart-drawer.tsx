@@ -1,15 +1,23 @@
 'use client';
 
 import React, { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/cart-context';
 import { Restaurant, CustomerDetails, OrderType } from '@/types';
 import { generateWhatsAppOrderUrl } from '@/lib/whatsapp';
 import { supabase } from '@/lib/supabase';
+import type { DeliveryLocation } from '@/components/customer/DeliveryLocationPicker';
 import {
   X, Trash2, Plus, Minus, Bike, ShoppingBag, Store,
-  Loader2, Tag, ChevronRight, User, Phone, MapPin, FileText
+  Loader2, Tag, ChevronRight, User, Phone, MapPin, FileText, Navigation
 } from 'lucide-react';
+
+// Dynamically import the map picker to avoid SSR Leaflet issues
+const DeliveryLocationPicker = dynamic(
+  () => import('@/components/customer/DeliveryLocationPicker'),
+  { ssr: false }
+);
 
 interface CartDrawerProps {
   restaurant: Restaurant;
@@ -26,10 +34,12 @@ const PROMO_CODES: Record<string, number> = {
 export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
   const router = useRouter();
   const { items, updateQuantity, removeItem, clearCart, subtotal } = useCart();
-  const [submitting, setSubmitting] = useState(false);
-  const [promoCode, setPromoCode] = useState('');
+  const [submitting, setSubmitting]     = useState(false);
+  const [promoCode, setPromoCode]       = useState('');
   const [appliedPromo, setAppliedPromo] = useState<{ code: string; discount: number } | null>(null);
-  const [promoError, setPromoError] = useState('');
+  const [promoError, setPromoError]     = useState('');
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [dropoffGeo, setDropoffGeo]     = useState<DeliveryLocation | null>(null);
   const [customer, setCustomer] = useState<CustomerDetails>({
     name: '',
     phone: '',
@@ -78,12 +88,17 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
           customer_name: customer.name,
           customer_phone: customer.phone,
           order_type: customer.orderType,
-          delivery_address: customer.deliveryAddress || null,
+          delivery_address: dropoffGeo?.address || customer.deliveryAddress || null,
           notes: customer.notes || null,
           subtotal,
           delivery_fee: deliveryFee,
           total_amount: grandTotal,
           status: 'pending',
+          // PostGIS geography columns — populated when customer pins location on map
+          ...(dropoffGeo ? {
+            dropoff_location: `SRID=4326;POINT(${dropoffGeo.lng} ${dropoffGeo.lat})`,
+          } : {}),
+          // pickup_location = restaurant coordinates (set when restaurant has a location in DB)
         }).select().single();
 
         if (!error && data?.id) {
@@ -141,6 +156,7 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
   ];
 
   return (
+    <>
     <div className="fixed inset-0 z-50 flex justify-end animate-fade-in">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
@@ -329,18 +345,59 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
                   </div>
 
                   {customer.orderType === 'delivery' && (
-                    <div className="relative">
-                      <MapPin className="absolute left-3.5 top-3.5 w-4 h-4 text-[#a89070]" />
-                      <textarea
-                        id="delivery-address"
-                        rows={2}
-                        placeholder="Delivery Address (Street, Building, Flat) *"
-                        required
-                        value={customer.deliveryAddress}
-                        onChange={e => setCustomer({ ...customer, deliveryAddress: e.target.value })}
-                        className="w-full pl-10 pr-3 py-3 text-sm border-2 border-[#e4d5c1] rounded-xl focus:ring-0 focus:border-[#c1440e] outline-none transition resize-none"
-                        style={{background:'#fdfaf5'}}
-                      />
+                    <div className="space-y-2">
+                      {/* ── Map pin picker button ── */}
+                      <button
+                        id="open-location-picker"
+                        type="button"
+                        onClick={() => setShowLocationPicker(true)}
+                        className="w-full flex items-center gap-3 px-4 py-3 border-2 rounded-xl transition-all text-left"
+                        style={{
+                          borderColor: dropoffGeo ? '#4a6741' : '#c1440e',
+                          background:  dropoffGeo ? '#edf3ec' : '#fdf2ee',
+                        }}
+                      >
+                        <span
+                          className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
+                          style={{ background: dropoffGeo ? '#4a6741' : '#c1440e' }}
+                        >
+                          {dropoffGeo
+                            ? <MapPin className="w-4 h-4 text-white" />
+                            : <Navigation className="w-4 h-4 text-white" />
+                          }
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          {dropoffGeo ? (
+                            <>
+                              <p className="text-xs font-bold" style={{ color: '#3b5334' }}>Adresse confirmée ✓</p>
+                              <p className="text-xs truncate" style={{ color: '#4a6741' }}>{dropoffGeo.address}</p>
+                            </>
+                          ) : (
+                            <>
+                              <p className="text-sm font-bold" style={{ color: '#c1440e' }}>Épingler ma position sur la carte</p>
+                              <p className="text-xs" style={{ color: '#a33a0c' }}>GPS auto + recherche adresse + pin draggable</p>
+                            </>
+                          )}
+                        </div>
+                        <span className="text-xs flex-shrink-0" style={{ color: dropoffGeo ? '#4a6741' : '#c1440e' }}>
+                          {dropoffGeo ? 'Modifier' : 'Ouvrir →'}
+                        </span>
+                      </button>
+
+                      {/* Fallback text input if customer prefers typing */}
+                      <div className="relative">
+                        <FileText className="absolute left-3.5 top-3.5 w-4 h-4 text-[#a89070]" />
+                        <textarea
+                          id="delivery-address"
+                          rows={2}
+                          placeholder={dropoffGeo ? 'Précisions facultatives (étage, code porte…)' : 'Ou tapez votre adresse manuellement *'}
+                          required={!dropoffGeo}
+                          value={customer.deliveryAddress}
+                          onChange={e => setCustomer({ ...customer, deliveryAddress: e.target.value })}
+                          className="w-full pl-10 pr-3 py-3 text-sm border-2 border-[#e4d5c1] rounded-xl focus:ring-0 focus:border-[#c1440e] outline-none transition resize-none"
+                          style={{background:'#fdfaf5'}}
+                        />
+                      </div>
                     </div>
                   )}
 
@@ -427,5 +484,16 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
         )}
       </div>
     </div>
+
+    {/* ── Delivery Location Picker Modal ── */}
+    <DeliveryLocationPicker
+      open={showLocationPicker}
+      onConfirm={(loc) => {
+        setDropoffGeo(loc);
+        setShowLocationPicker(false);
+      }}
+      onClose={() => setShowLocationPicker(false)}
+    />
+  </>
   );
 }
