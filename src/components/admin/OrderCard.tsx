@@ -3,21 +3,17 @@
 /**
  * OrderCard — DelivriLi Restaurant Staff POS Card
  * =====================================================
- * Fully branded with the DelivriLi Moroccan design system:
- *  • Lalezar display font headings
- *  • Terracotta (#c1440e) primary / Cobalt (#1e5b8c) secondary / Saffron (#e8a93a) accent
- *  • Zellige geometric background on urgent cards
- *  • Glassmorphism overlays
- *  • PrepTimePopup: animated bottom sheet with time presets
- *  • Live countdown ring on accepted orders
+ * Redesigned with the Appetizing Red / Warm Gold / Playfair / Karla theme.
+ * No emojis used. Block-based layouts.
  */
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Order, OrderStatus } from '@/types';
 import {
   Clock, Phone, MapPin, CheckCircle2, Package, Check,
   Printer, PhoneCall, ChevronRight, X, Timer,
   Plus, Minus, AlertTriangle, Flame, Bike,
+  Zap, Utensils, ChefHat, Soup
 } from 'lucide-react';
 
 interface OrderCardProps {
@@ -29,38 +25,32 @@ interface OrderCardProps {
   ) => void;
 }
 
-// ── Preset time options ───────────────────────────────────────────────────────
-
 const PREP_PRESETS = [
-  { label: '10', minutes: 10, icon: '⚡', hint: 'Express' },
-  { label: '15', minutes: 15, icon: '🔥', hint: 'Rapide' },
-  { label: '20', minutes: 20, icon: '🍳', hint: 'Normal' },
-  { label: '25', minutes: 25, icon: '👨‍🍳', hint: 'Soigné' },
-  { label: '30', minutes: 30, icon: '🫕', hint: 'Mijoté' },
-  { label: '45', minutes: 45, icon: '🐢', hint: 'Slow' },
+  { label: '10', minutes: 10, icon: <Zap size={20} />, hint: 'Express' },
+  { label: '15', minutes: 15, icon: <Flame size={20} />, hint: 'Fast' },
+  { label: '20', minutes: 20, icon: <Utensils size={20} />, hint: 'Normal' },
+  { label: '25', minutes: 25, icon: <ChefHat size={20} />, hint: 'Careful' },
+  { label: '30', minutes: 30, icon: <Soup size={20} />, hint: 'Simmered' },
+  { label: '45', minutes: 45, icon: <Timer size={20} />, hint: 'Slow' },
 ];
 
-// ── Status config — uses DelivriLi palette ────────────────────────────────────
-
-const STATUS_CONFIG: Record<OrderStatus, { label: string; bg: string; text: string; dot: string }> = {
-  pending:          { label: 'En attente',       bg: '#fdf2ee', text: '#a33a0c', dot: '#c1440e' },
-  confirmed:        { label: 'Confirmée',         bg: '#eef4fb', text: '#184d77', dot: '#1e5b8c' },
-  preparing:        { label: 'En préparation 🍳', bg: '#fdf8ee', text: '#b57a0a', dot: '#e8a93a' },
-  ready:            { label: 'Prête ✅',           bg: '#edf3ec', text: '#3b5334', dot: '#4a6741' },
-  picked_up:        { label: 'Récupérée 📦',       bg: '#fdf2ee', text: '#842f09', dot: '#c1440e' },
-  out_for_delivery: { label: 'En livraison 🛵',    bg: '#eef4fb', text: '#123f62', dot: '#1e5b8c' },
-  arrived:          { label: 'Arrivée 📍',         bg: '#edf3ec', text: '#3b5334', dot: '#4a6741' },
-  completed:        { label: 'Terminée',           bg: '#f5ede0', text: '#a89070', dot: '#c9a882' },
-  cancelled:        { label: 'Annulée',            bg: '#fbe0d3', text: '#842f09', dot: '#c1440e' },
+const STATUS_CONFIG: Record<OrderStatus, { label: string; bg: string; text: string; dot: string; icon: React.ReactNode }> = {
+  pending:          { label: 'Pending',       bg: '#fee2e2', text: '#b91c1c', dot: '#dc2626', icon: null },
+  confirmed:        { label: 'Confirmed',     bg: '#fef3c7', text: '#b45309', dot: '#d97706', icon: null },
+  preparing:        { label: 'Preparing',     bg: '#ffedd5', text: '#c2410c', dot: '#ea580c', icon: <Utensils size={12}/> },
+  ready:            { label: 'Ready',         bg: '#dcfce7', text: '#15803d', dot: '#16a34a', icon: <CheckCircle2 size={12}/> },
+  picked_up:        { label: 'Picked Up',     bg: '#fee2e2', text: '#b91c1c', dot: '#dc2626', icon: <Package size={12}/> },
+  out_for_delivery: { label: 'Delivering',    bg: '#e0f2fe', text: '#0369a1', dot: '#0284c7', icon: <Bike size={12}/> },
+  arrived:          { label: 'Arrived',       bg: '#dcfce7', text: '#15803d', dot: '#16a34a', icon: <MapPin size={12}/> },
+  completed:        { label: 'Completed',     bg: '#f3f4f6', text: '#4b5563', dot: '#6b7280', icon: null },
+  cancelled:        { label: 'Cancelled',     bg: '#fecaca', text: '#b91c1c', dot: '#ef4444', icon: null },
 };
 
-const ORDER_TYPE_LABEL: Record<string, { label: string; icon: string }> = {
-  delivery: { label: 'Livraison', icon: '🛵' },
-  pickup:   { label: 'À emporter', icon: '🛍️' },
-  dine_in:  { label: 'Sur place', icon: '🍽️' },
+const ORDER_TYPE_LABEL: Record<string, { label: string; icon: React.ReactNode }> = {
+  delivery: { label: 'Delivery', icon: <Bike size={14}/> },
+  pickup:   { label: 'Pickup',   icon: <Package size={14}/> },
+  dine_in:  { label: 'Dine-in',  icon: <Utensils size={14}/> },
 };
-
-// ── Hooks ─────────────────────────────────────────────────────────────────────
 
 function useElapsedTime(createdAt: string) {
   const [elapsed, setElapsed] = useState('');
@@ -92,7 +82,7 @@ function useCountdown(readyAt: string | null | undefined) {
         min: Math.floor(diff / 60000),
         sec: Math.floor((diff % 60000) / 1000),
         overdue: false,
-        pct: 0, // not needed for ring calc here
+        pct: 0,
       });
     };
     update();
@@ -101,8 +91,6 @@ function useCountdown(readyAt: string | null | undefined) {
   }, [readyAt]);
   return state;
 }
-
-// ── PrepTimePopup ─────────────────────────────────────────────────────────────
 
 function PrepTimePopup({
   order,
@@ -123,7 +111,7 @@ function PrepTimePopup({
 
   const readyTime = minutes
     ? new Date(Date.now() + minutes * 60_000)
-        .toLocaleTimeString('fr-MA', { hour: '2-digit', minute: '2-digit' })
+        .toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
     : null;
 
   const handleOverlay = useCallback((e: React.MouseEvent) => {
@@ -136,7 +124,6 @@ function PrepTimePopup({
     return () => window.removeEventListener('keydown', h);
   }, [onClose]);
 
-  // Circular arc progress for the selected time
   const arcPct = minutes ? Math.min(100, (minutes / 60) * 100) : 0;
   const r = 44; const circ = 2 * Math.PI * r;
   const dash = circ * (arcPct / 100);
@@ -144,34 +131,26 @@ function PrepTimePopup({
   return (
     <div ref={overlayRef} className="ptp-overlay" onClick={handleOverlay} role="dialog" aria-modal>
       <div className="ptp-sheet">
-
-        {/* Moroccan ornament strip */}
-        <div className="ptp-ornament" aria-hidden />
-
-        {/* Header */}
         <div className="ptp-header">
           <div className="ptp-header-left">
             <div className="ptp-timer-badge">
-              <Timer size={18} className="ptp-timer-icon" />
+              <Timer size={20} className="ptp-timer-icon" />
             </div>
             <div>
-              <h2 className="ptp-title">وقت التحضير</h2>
-              <p className="ptp-subtitle">Commande <strong>#{order.order_number}</strong> — {order.customer_name}</p>
+              <h2 className="ptp-title">Prep Time</h2>
+              <p className="ptp-subtitle">Order <strong>#{order.order_number}</strong> — {order.customer_name}</p>
             </div>
           </div>
-          <button className="ptp-close" onClick={onClose}><X size={16} /></button>
+          <button className="ptp-close" onClick={onClose}><X size={18} /></button>
         </div>
 
-        {/* Arc visualiser */}
         <div className="ptp-arc-wrap">
           <svg viewBox="0 0 100 100" className="ptp-arc-svg">
-            {/* Track */}
-            <circle cx="50" cy="50" r={r} fill="none" stroke="#e4d5c1" strokeWidth="7" strokeLinecap="round"
+            <circle cx="50" cy="50" r={r} fill="none" stroke="#fee2e2" strokeWidth="7" strokeLinecap="round"
               strokeDasharray={circ} strokeDashoffset={0}
               transform="rotate(-90 50 50)" />
-            {/* Fill */}
             <circle cx="50" cy="50" r={r} fill="none"
-              stroke={minutes ? '#c1440e' : '#e4d5c1'} strokeWidth="7" strokeLinecap="round"
+              stroke={minutes ? '#dc2626' : '#fee2e2'} strokeWidth="7" strokeLinecap="round"
               strokeDasharray={`${dash} ${circ}`}
               transform="rotate(-90 50 50)"
               style={{ transition: 'stroke-dasharray .4s cubic-bezier(.16,1,.3,1), stroke .3s' }}
@@ -189,16 +168,14 @@ function PrepTimePopup({
           </div>
         </div>
 
-        {/* Ready time preview */}
         {readyTime && (
           <div className="ptp-ready-preview">
-            <Clock size={13} className="ptp-ready-icon" />
-            Prête à <strong>{readyTime}</strong> · dans {minutes} min
+            <Clock size={14} className="ptp-ready-icon" />
+            Ready at <strong>{readyTime}</strong> · in {minutes} min
           </div>
         )}
 
-        {/* Preset grid */}
-        <div className="ptp-preset-label">Délai rapide</div>
+        <div className="ptp-preset-label">Quick Presets</div>
         <div className="ptp-preset-grid">
           {PREP_PRESETS.map(({ label, minutes: m, icon, hint }) => {
             const isActive = !useCustom && selected === m;
@@ -216,56 +193,51 @@ function PrepTimePopup({
           })}
         </div>
 
-        {/* Custom stepper */}
         <div className="ptp-custom-wrap">
-          <span className="ptp-custom-label">Personnaliser</span>
+          <span className="ptp-custom-label">Custom</span>
           <div className={`ptp-stepper ${useCustom ? 'ptp-stepper--active' : ''}`}>
             <button className="ptp-step"
               onClick={() => { setCustom(v => Math.max(5, v - 5)); setUseCustom(true); }}>
-              <Minus size={14} />
+              <Minus size={16} />
             </button>
             <span className="ptp-step-val" onClick={() => setUseCustom(true)}>
               {custom}<span className="ptp-step-unit">min</span>
             </span>
             <button className="ptp-step"
               onClick={() => { setCustom(v => Math.min(120, v + 5)); setUseCustom(true); }}>
-              <Plus size={14} />
+              <Plus size={16} />
             </button>
           </div>
         </div>
 
-        {/* Actions */}
         <div className="ptp-footer">
-          <button className="ptp-btn-cancel" onClick={onClose}>Annuler</button>
+          <button className="ptp-btn-cancel" onClick={onClose}>Cancel</button>
           <button
             className="ptp-btn-confirm"
             disabled={!canConfirm}
             onClick={() => canConfirm && onConfirm(minutes!)}
           >
-            <Check size={15} />
-            Accepter — {minutes ? `${minutes} min` : '…'}
+            <Check size={16} />
+            Accept — {minutes ? `${minutes} min` : '…'}
           </button>
         </div>
       </div>
 
       <style>{`
-        /* ── Overlay ── */
         .ptp-overlay {
           position: fixed; inset: 0; z-index: 9999;
-          background: rgba(43,35,32,.72);
+          background: rgba(69,10,10,.72);
           backdrop-filter: blur(8px);
           display: flex; align-items: flex-end; justify-content: center;
           padding: 0;
           animation: ptp-overlay-in .2s ease;
         }
         @keyframes ptp-overlay-in { from{opacity:0} to{opacity:1} }
-
-        /* ── Sheet (bottom sheet) ── */
         .ptp-sheet {
           width: 100%; max-width: 480px;
-          background: #fdfaf5;
-          border-radius: 28px 28px 0 0;
-          box-shadow: 0 -16px 60px rgba(43,35,32,.22);
+          background: #ffffff;
+          border-radius: 32px 32px 0 0;
+          box-shadow: 0 -16px 60px rgba(69,10,10,.22);
           overflow: hidden;
           animation: ptp-sheet-in .3s cubic-bezier(.16,1,.3,1);
           padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -274,51 +246,35 @@ function PrepTimePopup({
           from { transform: translateY(100%); }
           to   { transform: translateY(0); }
         }
-
-        /* ── Moroccan ornament strip ── */
-        .ptp-ornament {
-          height: 6px;
-          background: repeating-linear-gradient(
-            90deg,
-            #c1440e  0px, #c1440e  8px,
-            #e8a93a  8px, #e8a93a 16px,
-            #1e5b8c 16px, #1e5b8c 24px,
-            #e8a93a 24px, #e8a93a 32px
-          );
-        }
-
-        /* ── Header ── */
         .ptp-header {
           display: flex; align-items: flex-start; justify-content: space-between;
-          padding: 18px 20px 10px; gap: 12px;
+          padding: 24px 24px 16px; gap: 12px;
         }
-        .ptp-header-left { display: flex; align-items: flex-start; gap: 12px; }
+        .ptp-header-left { display: flex; align-items: flex-start; gap: 14px; }
         .ptp-timer-badge {
-          width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
-          background: linear-gradient(135deg, #c1440e, #a33a0c);
+          width: 46px; height: 46px; border-radius: 14px; flex-shrink: 0;
+          background: linear-gradient(135deg, #dc2626, #991b1b);
           display: flex; align-items: center; justify-content: center;
-          box-shadow: 0 4px 12px rgba(193,68,14,.35);
+          box-shadow: 0 6px 16px rgba(220,38,38,.35);
         }
-        .ptp-timer-icon { color: #e8a93a; }
+        .ptp-timer-icon { color: #fef2f2; }
         .ptp-title {
-          font-family: 'Lalezar', 'Tajawal', sans-serif;
-          font-size: 1.3rem; font-weight: 400;
-          color: #2b2320; margin: 0 0 2px; line-height: 1.1;
+          font-family: var(--font-heading);
+          font-size: 1.4rem; font-weight: 700;
+          color: #450a0a; margin: 0 0 4px; line-height: 1.1;
         }
-        .ptp-subtitle { font-size: .8rem; color: #a89070; margin: 0; }
-        .ptp-subtitle strong { color: #6b4c38; }
+        .ptp-subtitle { font-size: .85rem; color: #7f1d1d; margin: 0; }
+        .ptp-subtitle strong { color: #450a0a; }
         .ptp-close {
-          width: 32px; height: 32px; border-radius: 8px; border: none; flex-shrink: 0;
-          background: #f5ede0; color: #a89070; cursor: pointer;
+          width: 36px; height: 36px; border-radius: 10px; border: none; flex-shrink: 0;
+          background: #fef2f2; color: #991b1b; cursor: pointer;
           display: flex; align-items: center; justify-content: center;
           transition: background .14s;
         }
-        .ptp-close:hover { background: #e4d5c1; color: #2b2320; }
-
-        /* ── Arc visualiser ── */
+        .ptp-close:hover { background: #fee2e2; color: #450a0a; }
         .ptp-arc-wrap {
-          position: relative; width: 120px; height: 120px;
-          margin: 4px auto 8px;
+          position: relative; width: 130px; height: 130px;
+          margin: 8px auto 16px;
         }
         .ptp-arc-svg { width: 100%; height: 100%; }
         .ptp-arc-center {
@@ -327,152 +283,142 @@ function PrepTimePopup({
           align-items: center; justify-content: center;
         }
         .ptp-arc-value {
-          font-family: 'Lalezar', sans-serif;
-          font-size: 2.2rem; font-weight: 400; color: #c1440e; line-height: 1;
+          font-family: var(--font-heading);
+          font-size: 2.6rem; font-weight: 700; color: #dc2626; line-height: 1;
         }
         .ptp-arc-unit {
-          font-size: .72rem; font-weight: 700; color: #a89070;
+          font-size: .75rem; font-weight: 700; color: #991b1b;
           text-transform: uppercase; letter-spacing: .06em;
         }
         .ptp-arc-placeholder {
-          font-family: 'Lalezar', sans-serif;
-          font-size: 2.5rem; color: #e4d5c1;
+          font-family: var(--font-heading);
+          font-size: 3rem; color: #fecaca;
         }
-
-        /* ── Ready preview ── */
         .ptp-ready-preview {
-          display: flex; align-items: center; gap: 7px;
-          margin: 0 20px 14px;
-          padding: 9px 14px;
-          background: #edf3ec; border: 1.5px solid #cfe2cd;
-          border-radius: 12px;
-          font-size: .83rem; color: #3b5334;
+          display: flex; align-items: center; gap: 8px;
+          margin: 0 24px 18px;
+          padding: 12px 16px;
+          background: #dcfce7; border: 1px solid #bbf7d0;
+          border-radius: 14px;
+          font-size: .9rem; color: #166534; font-weight: 500;
           animation: ptp-overlay-in .25s ease;
         }
-        .ptp-ready-icon { color: #4a6741; flex-shrink: 0; }
-        .ptp-ready-preview strong { color: #2b2320; }
-
-        /* ── Preset grid ── */
+        .ptp-ready-icon { color: #15803d; flex-shrink: 0; }
+        .ptp-ready-preview strong { color: #14532d; font-weight: 700;}
         .ptp-preset-label {
-          padding: 0 20px 8px;
-          font-size: .72rem; font-weight: 900;
-          color: #a89070; text-transform: uppercase; letter-spacing: .08em;
+          padding: 0 24px 10px;
+          font-size: .75rem; font-weight: 800;
+          color: #991b1b; text-transform: uppercase; letter-spacing: .08em;
         }
         .ptp-preset-grid {
           display: grid; grid-template-columns: repeat(3, 1fr);
-          gap: 8px; padding: 0 20px;
+          gap: 10px; padding: 0 24px;
         }
         .ptp-tile {
           display: flex; flex-direction: column; align-items: center;
-          justify-content: center; gap: 2px;
-          padding: 11px 6px;
+          justify-content: center; gap: 4px;
+          padding: 14px 8px;
           border-radius: 16px;
-          border: 2px solid #e4d5c1;
-          background: #fdfaf5;
+          border: 2px solid #fee2e2;
+          background: #fef2f2;
           cursor: pointer;
           transition: all .15s cubic-bezier(.16,1,.3,1);
         }
         .ptp-tile:hover {
-          border-color: #c1440e; background: #fdf2ee;
+          border-color: #f87171; background: #fff;
           transform: translateY(-2px);
-          box-shadow: 0 6px 18px rgba(193,68,14,.18);
+          box-shadow: 0 6px 18px rgba(220,38,38,.12);
         }
         .ptp-tile--active {
-          border-color: #c1440e; background: #fdf2ee;
-          box-shadow: 0 0 0 3px rgba(193,68,14,.2), 0 6px 18px rgba(193,68,14,.15);
+          border-color: #dc2626; background: #fff;
+          box-shadow: 0 0 0 3px rgba(220,38,38,.2), 0 6px 18px rgba(220,38,38,.15);
           transform: translateY(-2px);
         }
-        .ptp-tile-icon { font-size: 1.35rem; line-height: 1; }
+        .ptp-tile-icon { color: #991b1b; }
+        .ptp-tile--active .ptp-tile-icon { color: #dc2626; }
         .ptp-tile-min {
-          font-family: 'Lalezar', sans-serif;
-          font-size: 1.4rem; color: #2b2320; line-height: 1;
+          font-family: var(--font-heading);
+          font-size: 1.6rem; color: #450a0a; line-height: 1; font-weight: 700;
         }
-        .ptp-tile--active .ptp-tile-min { color: #c1440e; }
-        .ptp-tile-hint { font-size: .65rem; color: #a89070; font-weight: 700; letter-spacing: .05em; }
-        .ptp-tile--active .ptp-tile-hint { color: #d96b3f; }
-
-        /* ── Custom stepper ── */
+        .ptp-tile--active .ptp-tile-min { color: #dc2626; }
+        .ptp-tile-hint { font-size: .7rem; color: #7f1d1d; font-weight: 700; letter-spacing: .05em; }
+        .ptp-tile--active .ptp-tile-hint { color: #dc2626; }
         .ptp-custom-wrap {
           display: flex; align-items: center; justify-content: space-between;
-          padding: 14px 20px 6px;
+          padding: 20px 24px 8px;
         }
         .ptp-custom-label {
-          font-size: .72rem; font-weight: 900;
-          color: #a89070; text-transform: uppercase; letter-spacing: .08em;
+          font-size: .75rem; font-weight: 800;
+          color: #991b1b; text-transform: uppercase; letter-spacing: .08em;
         }
         .ptp-stepper {
           display: flex; align-items: center; gap: 0;
-          border: 2px solid #e4d5c1; border-radius: 14px;
-          background: #fdfaf5; overflow: hidden;
+          border: 2px solid #fee2e2; border-radius: 16px;
+          background: #fef2f2; overflow: hidden;
           transition: border-color .15s;
         }
-        .ptp-stepper--active { border-color: #c1440e; }
+        .ptp-stepper--active { border-color: #dc2626; }
         .ptp-step {
-          width: 38px; height: 38px;
+          width: 44px; height: 44px;
           border: none; background: transparent;
-          color: #6b4c38; cursor: pointer;
+          color: #991b1b; cursor: pointer;
           display: flex; align-items: center; justify-content: center;
           transition: background .12s;
         }
-        .ptp-step:hover { background: #f5ede0; }
+        .ptp-step:hover { background: #fee2e2; }
         .ptp-step-val {
-          min-width: 64px; text-align: center;
-          font-family: 'Lalezar', sans-serif;
-          font-size: 1.3rem; color: #2b2320; line-height: 1;
+          min-width: 72px; text-align: center;
+          font-family: var(--font-heading);
+          font-size: 1.5rem; color: #450a0a; line-height: 1; font-weight: 700;
           cursor: pointer; padding: 0 4px;
         }
-        .ptp-stepper--active .ptp-step-val { color: #c1440e; }
+        .ptp-stepper--active .ptp-step-val { color: #dc2626; }
         .ptp-step-unit {
-          font-family: 'Tajawal', sans-serif;
-          font-size: .7rem; color: #a89070;
+          font-family: var(--font-body);
+          font-size: .75rem; color: #7f1d1d;
           font-weight: 700; margin-left: 2px;
         }
-
-        /* ── Footer ── */
         .ptp-footer {
-          display: flex; gap: 10px;
-          padding: 16px 20px 20px;
+          display: flex; gap: 12px;
+          padding: 24px 24px 24px;
         }
         .ptp-btn-cancel {
-          flex: 0 0 auto; padding: 0 20px; height: 50px;
-          border-radius: 14px;
-          border: 2px solid #e4d5c1; background: #fdfaf5;
-          color: #a89070; font-family: 'Tajawal', sans-serif;
-          font-weight: 700; font-size: .9rem; cursor: pointer;
+          flex: 0 0 auto; padding: 0 24px; height: 54px;
+          border-radius: 16px;
+          border: 2px solid #fee2e2; background: #fef2f2;
+          color: #7f1d1d; font-family: var(--font-body);
+          font-weight: 700; font-size: .95rem; cursor: pointer;
           transition: all .13s;
         }
-        .ptp-btn-cancel:hover { border-color: #c9a882; color: #6b4c38; }
+        .ptp-btn-cancel:hover { border-color: #fecaca; color: #450a0a; }
         .ptp-btn-confirm {
-          flex: 1; height: 50px;
-          border-radius: 14px; border: none;
-          background: linear-gradient(135deg, #c1440e 0%, #a33a0c 100%);
+          flex: 1; height: 54px;
+          border-radius: 16px; border: none;
+          background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
           color: #fff;
-          font-family: 'Lalezar', sans-serif; font-size: 1.05rem;
+          font-family: var(--font-heading); font-size: 1.1rem; font-weight: 700;
           cursor: pointer;
-          display: flex; align-items: center; justify-content: center; gap: 8px;
-          box-shadow: 0 6px 20px rgba(193,68,14,.38);
+          display: flex; align-items: center; justify-content: center; gap: 10px;
+          box-shadow: 0 8px 24px rgba(220,38,38,.4);
           transition: all .14s;
         }
         .ptp-btn-confirm:hover:not(:disabled) {
-          box-shadow: 0 8px 24px rgba(193,68,14,.5);
-          transform: translateY(-1px);
+          box-shadow: 0 10px 28px rgba(220,38,38,.5);
+          transform: translateY(-2px);
         }
         .ptp-btn-confirm:active:not(:disabled) { transform: translateY(0); }
         .ptp-btn-confirm:disabled {
-          opacity: .45; cursor: not-allowed;
-          background: #e4d5c1; box-shadow: none; color: #a89070;
+          opacity: .5; cursor: not-allowed;
+          background: #fecaca; box-shadow: none; color: #991b1b;
         }
-
         @media (min-width: 480px) {
-          .ptp-overlay { align-items: center; padding: 20px; }
-          .ptp-sheet { border-radius: 24px; }
+          .ptp-overlay { align-items: center; padding: 24px; }
+          .ptp-sheet { border-radius: 32px; }
         }
       `}</style>
     </div>
   );
 }
-
-// ── CountdownBadge ────────────────────────────────────────────────────────────
 
 function CountdownBadge({ readyAt, prepMinutes }: { readyAt: string; prepMinutes: number }) {
   const cd = useCountdown(readyAt);
@@ -480,15 +426,9 @@ function CountdownBadge({ readyAt, prepMinutes }: { readyAt: string; prepMinutes
 
   if (cd.overdue) {
     return (
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 6,
-        padding: '8px 12px', borderRadius: 12,
-        background: '#fdf2ee', border: '1.5px solid #f5bda5',
-        fontSize: '.78rem', fontWeight: 700, color: '#a33a0c',
-        marginTop: 6,
-      }}>
-        <AlertTriangle size={13} style={{ color: '#c1440e', flexShrink: 0 }} />
-        En retard · prévu {prepMinutes} min
+      <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-red-50 border-2 border-red-200 text-red-600 text-sm font-bold mt-2">
+        <AlertTriangle size={16} className="text-red-500 shrink-0" />
+        Overdue · expected {prepMinutes} min
       </div>
     );
   }
@@ -496,37 +436,28 @@ function CountdownBadge({ readyAt, prepMinutes }: { readyAt: string; prepMinutes
   const totalSec = prepMinutes * 60;
   const remainSec = cd.min * 60 + cd.sec;
   const pct = Math.max(0, Math.min(100, (remainSec / totalSec) * 100));
-  const barColor = pct > 40 ? '#4a6741' : pct > 15 ? '#e8a93a' : '#c1440e';
-  const readyHHmm = new Date(readyAt).toLocaleTimeString('fr-MA', { hour: '2-digit', minute: '2-digit' });
+  const barColor = pct > 40 ? '#16a34a' : pct > 15 ? '#d97706' : '#dc2626';
+  const readyHHmm = new Date(readyAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
   return (
-    <div style={{
-      marginTop: 8, padding: '8px 12px 10px',
-      borderRadius: 12, background: '#edf3ec',
-      border: '1.5px solid #cfe2cd',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-        <Timer size={12} style={{ color: '#4a6741', flexShrink: 0 }} />
-        <span style={{ fontSize: '.82rem', fontWeight: 800, color: '#2b2320', fontFamily: "'Lalezar', sans-serif" }}>
+    <div className="mt-2 p-3 rounded-xl bg-gray-50 border border-gray-200">
+      <div className="flex items-center gap-2 mb-2">
+        <Timer size={14} className="text-gray-500 shrink-0" />
+        <span className="text-sm font-black text-gray-900 font-heading">
           {cd.min}:{String(cd.sec).padStart(2, '0')}
         </span>
-        <span style={{ fontSize: '.73rem', color: '#6a9466', fontWeight: 600 }}>
-          restant · prête à {readyHHmm}
+        <span className="text-xs text-gray-500 font-bold">
+          remaining · ready at {readyHHmm}
         </span>
       </div>
-      <div style={{ width: '100%', height: 5, borderRadius: 99, background: '#cfe2cd', overflow: 'hidden' }}>
-        <div style={{
-          height: '100%', borderRadius: 99,
-          width: `${pct}%`,
-          background: `linear-gradient(90deg, ${barColor}, ${barColor}cc)`,
-          transition: 'width 1s linear, background .3s',
-        }} />
+      <div className="w-full h-1.5 rounded-full bg-gray-200 overflow-hidden">
+        <div className="h-full rounded-full transition-all duration-1000 ease-linear"
+          style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${barColor}, ${barColor}cc)` }}
+        />
       </div>
     </div>
   );
 }
-
-// ── OrderCard ─────────────────────────────────────────────────────────────────
 
 export function OrderCard({ order, onUpdateStatus }: OrderCardProps) {
   const isDelivery = order.order_type === 'delivery';
@@ -536,7 +467,7 @@ export function OrderCard({ order, onUpdateStatus }: OrderCardProps) {
   const [showPrepPopup, setShowPrepPopup] = useState(false);
 
   const status = STATUS_CONFIG[order.status];
-  const typeInfo = ORDER_TYPE_LABEL[order.order_type] ?? { label: order.order_type, icon: '📦' };
+  const typeInfo = ORDER_TYPE_LABEL[order.order_type] ?? { label: order.order_type, icon: <Package size={14}/> };
 
   const getNextStatus = (s: OrderStatus): OrderStatus | null => {
     const map: Partial<Record<OrderStatus, OrderStatus>> = {
@@ -547,15 +478,15 @@ export function OrderCard({ order, onUpdateStatus }: OrderCardProps) {
   const nextStatus = getNextStatus(order.status);
 
   const nextLabel =
-    nextStatus === 'confirmed' ? 'Accepter' :
-    nextStatus === 'preparing' ? 'Commencer' :
-    nextStatus === 'ready'     ? 'Marquer Prête' :
-    nextStatus === 'completed' ? 'Terminer' : '';
+    nextStatus === 'confirmed' ? 'Accept' :
+    nextStatus === 'preparing' ? 'Start' :
+    nextStatus === 'ready'     ? 'Mark Ready' :
+    nextStatus === 'completed' ? 'Complete' : '';
 
   const nextIcon =
-    nextStatus === 'confirmed'  ? <Check size={15} /> :
-    nextStatus === 'preparing'  ? <Package size={15} /> :
-    nextStatus === 'ready'      ? <CheckCircle2 size={15} /> : null;
+    nextStatus === 'confirmed'  ? <Check size={16} /> :
+    nextStatus === 'preparing'  ? <Utensils size={16} /> :
+    nextStatus === 'ready'      ? <CheckCircle2 size={16} /> : null;
 
   const handleMainAction = () => {
     if (nextStatus === 'confirmed') { setShowPrepPopup(true); return; }
@@ -573,249 +504,117 @@ export function OrderCard({ order, onUpdateStatus }: OrderCardProps) {
 
   return (
     <>
-      {/* ── Card ── */}
-      <div style={{
-        background: '#fdfaf5',
-        border: `1.5px solid ${isUrgent ? '#f5bda5' : '#e4d5c1'}`,
-        borderRadius: 20,
-        boxShadow: isUrgent
-          ? '0 0 0 0 rgba(193,68,14,0), 0 4px 16px rgba(43,35,32,.10)'
-          : '0 2px 8px rgba(43,35,32,.08)',
-        overflow: 'hidden',
-        display: 'flex', flexDirection: 'column',
-        fontFamily: "'Tajawal', system-ui, sans-serif",
-        animation: isUrgent ? 'oc-urgent-pulse 2s ease-in-out infinite' : undefined,
-        transition: 'box-shadow .2s',
-      }}>
-
-        {/* Moroccan ornament top bar */}
-        <div style={{
-          height: 4,
-          background: 'repeating-linear-gradient(90deg, #c1440e 0px, #c1440e 6px, #e8a93a 6px, #e8a93a 12px, #1e5b8c 12px, #1e5b8c 18px, #e8a93a 18px, #e8a93a 24px)',
-          opacity: isUrgent ? 1 : 0.6,
-        }} />
-
-        {/* ── Header ── */}
-        <div style={{
-          padding: '12px 14px 10px',
-          borderBottom: '1px solid #f0e6d8',
-          display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8,
-        }}>
-          <div style={{ flex: 1 }}>
-            {/* Order number row */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 4 }}>
-              <span style={{
-                fontFamily: "'Lalezar', sans-serif",
-                fontSize: '1.2rem', color: '#2b2320', lineHeight: 1,
-              }}>#{order.order_number}</span>
-
-              {/* Status pill */}
-              <span style={{
-                padding: '3px 9px', borderRadius: 99,
-                fontSize: '.68rem', fontWeight: 800,
-                letterSpacing: '.04em', textTransform: 'uppercase',
-                background: status.bg, color: status.text,
-                display: 'flex', alignItems: 'center', gap: 4,
-              }}>
-                <span style={{
-                  width: 6, height: 6, borderRadius: '50%',
-                  background: status.dot, flexShrink: 0,
-                }} />
-                {status.label}
+      <div className={`bg-white border-[1.5px] rounded-[24px] shadow-sm flex flex-col font-body transition-all duration-300 ${
+        isUrgent ? 'border-red-300 animate-[pulse_2s_ease-in-out_infinite] shadow-[0_4px_24px_rgba(220,38,38,0.15)]' : 'border-gray-200 hover:shadow-md'
+      }`}>
+        {/* Header */}
+        <div className="p-4 border-b border-gray-100 flex justify-between items-start gap-2">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 flex-wrap mb-1.5">
+              <span className="font-heading text-xl font-bold text-gray-900 leading-none">
+                #{order.order_number}
               </span>
-
-              {/* Urgent badge */}
+              <span className="px-2.5 py-0.5 rounded-md text-[11px] font-black uppercase tracking-wide flex items-center gap-1.5"
+                style={{ background: status.bg, color: status.text }}>
+                {status.icon && status.icon} {status.label}
+              </span>
               {isUrgent && (
-                <span style={{
-                  display: 'flex', alignItems: 'center', gap: 3,
-                  padding: '3px 8px', borderRadius: 99,
-                  fontSize: '.68rem', fontWeight: 900,
-                  background: 'linear-gradient(135deg, #c1440e, #a33a0c)',
-                  color: '#fff',
-                }}>
-                  <Flame size={10} /> Urgent
+                <span className="px-2.5 py-0.5 rounded-md text-[11px] font-black uppercase tracking-wide flex items-center gap-1 bg-red-600 text-white shadow-sm">
+                  <Flame size={12} /> Urgent
                 </span>
               )}
             </div>
-
-            {/* Time row */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#a89070', fontSize: '.73rem' }}>
-              <Clock size={11} />
+            <div className="flex items-center gap-1.5 text-gray-500 text-xs font-bold">
+              <Clock size={12} />
               <span>{elapsed}</span>
-              <span style={{ color: '#e4d5c1' }}>·</span>
-              <span>{new Date(order.created_at).toLocaleTimeString('fr-MA', { hour: '2-digit', minute: '2-digit' })}</span>
+              <span className="text-gray-300">•</span>
+              <span>{new Date(order.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
             </div>
           </div>
-
-          {/* Amount + type */}
-          <div style={{ textAlign: 'right', flexShrink: 0 }}>
-            <p style={{
-              fontFamily: "'Lalezar', sans-serif",
-              fontSize: '1.25rem', color: '#2b2320', margin: 0, lineHeight: 1,
-            }}>
+          <div className="text-right shrink-0">
+            <p className="font-heading text-xl font-bold text-gray-900 m-0 leading-none">
               {Number(order.total_amount).toFixed(2)}
-              <span style={{ fontSize: '.7rem', color: '#a89070', fontFamily: "'Tajawal', sans-serif" }}> DH</span>
+              <span className="text-xs text-gray-500 font-body ml-1">DH</span>
             </p>
-            <p style={{ fontSize: '.72rem', color: '#a89070', margin: '3px 0 0' }}>
+            <p className="text-xs font-bold text-gray-500 mt-1 flex items-center justify-end gap-1">
               {typeInfo.icon} {typeInfo.label}
             </p>
           </div>
         </div>
 
-        {/* ── Body ── */}
-        <div style={{ padding: '10px 14px', flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {/* Customer name */}
-          <p style={{ fontWeight: 800, color: '#2b2320', fontSize: '.9rem', margin: 0 }}>
-            {order.customer_name}
-          </p>
-
-          {/* Phone */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Phone size={12} style={{ color: '#a89070', flexShrink: 0 }} />
-            <a href={`tel:${order.customer_phone}`} style={{
-              fontSize: '.78rem', color: '#6b4c38', fontWeight: 600,
-              textDecoration: 'none', transition: 'color .12s',
-            }}>
+        {/* Body */}
+        <div className="p-4 flex-1 flex flex-col gap-2">
+          <p className="font-bold text-gray-900 text-[15px] m-0">{order.customer_name}</p>
+          
+          <div className="flex items-center gap-2">
+            <Phone size={14} className="text-gray-400 shrink-0" />
+            <a href={`tel:${order.customer_phone}`} className="text-sm text-gray-600 font-bold hover:text-red-600 transition-colors">
               {order.customer_phone}
             </a>
           </div>
 
-          {/* Address */}
           {isDelivery && order.delivery_address && (
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
-              <MapPin size={12} style={{ color: '#a89070', flexShrink: 0, marginTop: 2 }} />
-              <span style={{ fontSize: '.76rem', color: '#6b4c38', lineHeight: 1.4 }}>
+            <div className="flex items-start gap-2">
+              <MapPin size={14} className="text-gray-400 shrink-0 mt-0.5" />
+              <span className="text-sm text-gray-600 font-medium leading-snug">
                 {order.delivery_address}
               </span>
             </div>
           )}
 
-          {/* Notes */}
           {order.notes && (
-            <div style={{
-              padding: '7px 10px', borderRadius: 10,
-              background: '#fdf8ee', border: '1px solid #f5d06a',
-              fontSize: '.75rem', color: '#6b4c38', lineHeight: 1.5,
-            }}>
-              <span style={{ fontWeight: 800 }}>📝</span> {order.notes}
+            <div className="p-2.5 rounded-xl bg-yellow-50 border border-yellow-200 text-sm text-yellow-900 font-medium leading-snug mt-1">
+              <span className="font-bold">Note:</span> {order.notes}
             </div>
           )}
 
-          {/* Countdown badge */}
           {showCountdown && (
-            <CountdownBadge
-              readyAt={order.ready_at!}
-              prepMinutes={order.estimated_prep_minutes!}
-            />
+            <CountdownBadge readyAt={order.ready_at!} prepMinutes={order.estimated_prep_minutes!} />
           )}
         </div>
 
-        {/* ── Quick actions ── */}
-        <div style={{ display: 'flex', gap: 8, padding: '4px 14px 6px' }}>
-          <button
-            onClick={() => window.print()}
-            style={{
-              flex: 1, height: 36, borderRadius: 10, cursor: 'pointer',
-              border: '1.5px solid #e4d5c1', background: '#fdfaf5',
-              color: '#a89070', fontSize: '.74rem', fontWeight: 700,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-              fontFamily: "'Tajawal', sans-serif", transition: 'all .12s',
-            }}
-          >
-            <Printer size={12} /> Ticket
+        {/* Quick Actions */}
+        <div className="flex gap-2 px-4 pb-2">
+          <button onClick={() => window.print()} className="flex-1 h-10 rounded-xl bg-gray-50 border border-gray-200 text-gray-600 text-sm font-bold flex items-center justify-center gap-2 hover:bg-gray-100 hover:text-gray-900 transition-colors">
+            <Printer size={14} /> Receipt
           </button>
-          <a
-            href={`tel:${order.customer_phone}`}
-            style={{
-              flex: 1, height: 36, borderRadius: 10, cursor: 'pointer',
-              border: '1.5px solid #d0e4f5', background: '#eef4fb',
-              color: '#1e5b8c', fontSize: '.74rem', fontWeight: 700,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-              fontFamily: "'Tajawal', sans-serif", textDecoration: 'none', transition: 'all .12s',
-            }}
-          >
-            <PhoneCall size={12} /> Appeler
+          <a href={`tel:${order.customer_phone}`} className="flex-1 h-10 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 text-sm font-bold flex items-center justify-center gap-2 hover:bg-blue-100 transition-colors">
+            <PhoneCall size={14} /> Call
           </a>
-          {isDelivery && (
-            <div style={{
-              flex: 1, height: 36, borderRadius: 10,
-              border: '1.5px solid #cfe2cd', background: '#edf3ec',
-              color: '#3b5334', fontSize: '.74rem', fontWeight: 700,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-            }}>
-              <Bike size={12} /> Livraison
-            </div>
-          )}
         </div>
 
-        {/* ── Main action ── */}
-        <div style={{ padding: '6px 14px 14px', display: 'flex', flexDirection: 'column', gap: 7 }}>
+        {/* Main Action */}
+        <div className="p-4 pt-1 flex flex-col gap-2">
           {nextStatus && (
             <button
-              id={`action-${order.id}`}
               onClick={handleMainAction}
-              style={{
-                width: '100%', height: 48, borderRadius: 14, border: 'none',
-                background: nextStatus === 'confirmed'
-                  ? 'linear-gradient(135deg, #c1440e, #a33a0c)'
-                  : nextStatus === 'preparing'
-                  ? 'linear-gradient(135deg, #1e5b8c, #123f62)'
-                  : nextStatus === 'ready'
-                  ? 'linear-gradient(135deg, #4a6741, #3b5334)'
-                  : 'linear-gradient(135deg, #2b2320, #1a1512)',
-                color: nextStatus === 'confirmed' ? '#fdf2ee' : '#fff',
-                fontFamily: "'Lalezar', sans-serif",
-                fontSize: '1.05rem', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                boxShadow: nextStatus === 'confirmed'
-                  ? '0 6px 20px rgba(193,68,14,.40)'
-                  : nextStatus === 'preparing'
-                  ? '0 6px 20px rgba(30,91,140,.35)'
-                  : '0 6px 20px rgba(74,103,65,.30)',
-                transition: 'all .14s',
-              }}
+              className={`w-full h-12 rounded-xl border-0 font-heading text-lg font-bold cursor-pointer flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 text-white ${
+                nextStatus === 'confirmed' ? 'bg-red-600 hover:bg-red-700 shadow-red-600/30' :
+                nextStatus === 'preparing' ? 'bg-yellow-500 hover:bg-yellow-600 shadow-yellow-500/30 text-yellow-950' :
+                nextStatus === 'ready'     ? 'bg-green-600 hover:bg-green-700 shadow-green-600/30' :
+                'bg-gray-900 hover:bg-black shadow-gray-900/30'
+              }`}
             >
               {nextIcon}
               {nextLabel}
               {nextStatus === 'confirmed' && (
-                <span style={{
-                  marginLeft: 4, fontSize: '.72rem',
-                  background: 'rgba(232,169,58,.25)',
-                  padding: '2px 8px', borderRadius: 99,
-                  color: '#e8a93a', fontFamily: "'Tajawal', sans-serif",
-                  fontWeight: 800,
-                }}>
-                  + Délai
+                <span className="ml-1 text-xs bg-white/20 px-2 py-0.5 rounded-full font-body font-bold">
+                  + Prep Time
                 </span>
               )}
             </button>
           )}
           {order.status === 'pending' && (
             <button
-              id={`cancel-${order.id}`}
               onClick={() => onUpdateStatus(order.id, 'cancelled')}
-              style={{
-                width: '100%', height: 38, borderRadius: 12, cursor: 'pointer',
-                border: '1.5px solid #f5bda5', background: 'transparent',
-                color: '#a33a0c', fontFamily: "'Tajawal', sans-serif",
-                fontWeight: 700, fontSize: '.82rem', transition: 'all .12s',
-              }}
+              className="w-full h-10 rounded-xl border-2 border-red-100 bg-transparent text-red-600 font-bold text-sm cursor-pointer hover:bg-red-50 transition-colors"
             >
-              Refuser la commande
+              Decline Order
             </button>
           )}
         </div>
       </div>
 
-      {/* Urgent pulse animation */}
-      <style>{`
-        @keyframes oc-urgent-pulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(193,68,14,.0), 0 4px 16px rgba(43,35,32,.10); }
-          50%       { box-shadow: 0 0 0 5px rgba(193,68,14,.15), 0 4px 16px rgba(43,35,32,.10); }
-        }
-      `}</style>
-
-      {/* ── Prep time popup ── */}
       {showPrepPopup && (
         <PrepTimePopup
           order={order}

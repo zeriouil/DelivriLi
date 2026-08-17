@@ -10,10 +10,9 @@ import { supabase } from '@/lib/supabase';
 import type { DeliveryLocation } from '@/components/customer/DeliveryLocationPicker';
 import {
   X, Trash2, Plus, Minus, Bike, ShoppingBag, Store,
-  Loader2, Tag, ChevronRight, User, Phone, MapPin, FileText, Navigation
+  Loader2, Tag, ChevronRight, User, Phone, MapPin, FileText, Navigation, Utensils
 } from 'lucide-react';
 
-// Dynamically import the map picker to avoid SSR Leaflet issues
 const DeliveryLocationPicker = dynamic(
   () => import('@/components/customer/DeliveryLocationPicker'),
   { ssr: false }
@@ -55,7 +54,6 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
   const promoDiscount = appliedPromo ? appliedPromo.discount : 0;
   const grandTotal = Math.max(0, subtotal + deliveryFee - promoDiscount);
 
-  // Progress towards free delivery
   const FREE_DELIVERY_THRESHOLD = 100;
   const progressPct = Math.min((subtotal / FREE_DELIVERY_THRESHOLD) * 100, 100);
   const remaining = Math.max(0, FREE_DELIVERY_THRESHOLD - subtotal);
@@ -81,7 +79,6 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
       let orderId = `ord-${Date.now()}`;
       let orderNumber = Math.floor(1000 + Math.random() * 9000);
 
-      // Attempt Supabase insert
       try {
         const { data, error } = await supabase.from('orders').insert({
           restaurant_id: restaurant.id,
@@ -94,11 +91,9 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
           delivery_fee: deliveryFee,
           total_amount: grandTotal,
           status: 'pending',
-          // PostGIS geography columns — populated when customer pins location on map
           ...(dropoffGeo ? {
             dropoff_location: `SRID=4326;POINT(${dropoffGeo.lng} ${dropoffGeo.lat})`,
           } : {}),
-          // pickup_location = restaurant coordinates (set when restaurant has a location in DB)
         }).select().single();
 
         if (!error && data?.id) {
@@ -109,7 +104,6 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
         console.warn('Supabase DB insert warning (using local fallback):', dbErr);
       }
 
-      // Always save order to local storage for tracking page fallback
       const localOrder = {
         id: orderId,
         restaurant_id: restaurant.id,
@@ -129,12 +123,10 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
       };
       try {
         localStorage.setItem(`local_order_${orderId}`, JSON.stringify(localOrder));
-        // Also add to local order history array
         const existing = JSON.parse(localStorage.getItem('local_orders_list') || '[]');
         localStorage.setItem('local_orders_list', JSON.stringify([localOrder, ...existing]));
       } catch {}
 
-      // Send WhatsApp message
       const waUrl = generateWhatsAppOrderUrl(restaurant, items, customer, subtotal, deliveryFee, grandTotal);
       window.open(waUrl, '_blank');
 
@@ -149,34 +141,34 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
     }
   };
 
-  const orderTypes: { id: OrderType; label: string; icon: React.FC<{ className?: string }>; desc: string }[] = [
+  const orderTypes = [
     { id: 'delivery', label: 'Delivery',  icon: Bike,        desc: `~${restaurant.delivery_fee} DH fee` },
     { id: 'pickup',   label: 'Takeaway',  icon: ShoppingBag, desc: 'Free pickup' },
     { id: 'dine_in',  label: 'Dine-In',   icon: Store,       desc: 'Table service' },
-  ];
+  ] as const;
 
   return (
     <>
-    <div className="fixed inset-0 z-50 flex justify-end animate-fade-in">
+    <div className="fixed inset-0 z-50 flex justify-end animate-fade-in font-body">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
       {/* Drawer */}
-      <div className="relative w-full max-w-md h-full flex flex-col shadow-2xl animate-slide-right" style={{background:'#fdfaf5'}}>
+      <div className="relative w-full max-w-md h-full flex flex-col shadow-2xl animate-slide-right bg-[#fef2f2]">
 
         {/* ── Header ────────────────────────────────── */}
-        <div className="p-4 border-b border-[#e4d5c1] flex items-center justify-between flex-shrink-0" style={{background:'linear-gradient(135deg,#5c2006,#c1440e)'}}>
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-[#e8a93a] rounded-xl flex items-center justify-center shadow-md">
-              <ShoppingBag className="w-5 h-5 text-[#2b2320]" />
+        <div className="p-5 border-b border-red-900/10 flex items-center justify-between flex-shrink-0 bg-gradient-to-r from-red-950 via-red-800 to-red-600 shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-yellow-400 rounded-xl flex items-center justify-center shadow-inner">
+              <ShoppingBag className="w-6 h-6 text-red-950" />
             </div>
             <div>
-              <h2 className="font-black text-base text-white" style={{fontFamily:'var(--font-heading,Lalezar),sans-serif'}}>طلبك — Your Order</h2>
-              <p className="text-orange-200 text-xs">{items.length} item{items.length !== 1 ? 's' : ''} · {restaurant.name}</p>
+              <h2 className="font-black text-xl text-white font-heading tracking-wide">Your Order</h2>
+              <p className="text-red-100 text-sm font-medium">{items.length} item{items.length !== 1 ? 's' : ''} · {restaurant.name}</p>
             </div>
           </div>
-          <button id="close-cart" onClick={onClose} className="p-2 text-orange-200 hover:text-white rounded-xl hover:bg-white/10 transition">
-            <X className="w-5 h-5" />
+          <button onClick={onClose} className="p-2 text-white hover:text-yellow-400 hover:bg-white/10 rounded-xl transition-colors">
+            <X className="w-6 h-6" />
           </button>
         </div>
 
@@ -185,73 +177,74 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
 
           {/* Empty State */}
           {items.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center p-8 gap-4">
-              <div className="w-24 h-24 rounded-full flex items-center justify-center text-5xl animate-float" style={{background:'#f5ede0'}}>
-                🛒
+            <div className="h-full flex flex-col items-center justify-center text-center p-8 gap-5">
+              <div className="w-24 h-24 rounded-[24px] bg-white border border-red-100 shadow-sm flex items-center justify-center text-red-300">
+                <ShoppingBag className="w-10 h-10" />
               </div>
               <div>
-                <h3 className="font-bold text-[#2b2320] text-lg">سلتك فارغة</h3>
-                <p className="text-[#a89070] text-sm mt-1">Add some delicious Moroccan dishes to get started</p>
+                <h3 className="font-bold text-red-950 text-xl font-heading mb-1">Your cart is empty</h3>
+                <p className="text-red-900/60 text-sm font-medium">Add some delicious items to get started.</p>
               </div>
-              <button onClick={onClose} className="mt-2 px-6 py-2.5 btn-primary text-sm">
+              <button onClick={onClose} className="mt-4 px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-md transition-colors">
                 Browse Menu
               </button>
             </div>
           ) : (
-            <div className="p-4 space-y-4">
+            <div className="p-5 space-y-5">
 
               {/* Free delivery progress */}
               {customer.orderType === 'delivery' && subtotal < FREE_DELIVERY_THRESHOLD && (
-                <div className="border border-[#e4d5c1] rounded-2xl p-3.5" style={{background:'#fdf2ee'}}>
-                  <p className="text-xs font-semibold text-[#842f09] mb-2">
-                    Add <strong>{remaining.toFixed(0)} DH</strong> more for free delivery 🚀
+                <div className="border border-red-200 rounded-2xl p-4 bg-white shadow-sm">
+                  <p className="text-sm font-bold text-red-900 mb-2.5">
+                    Add <strong className="text-red-600">{remaining.toFixed(0)} DH</strong> more for free delivery
                   </p>
-                  <div className="w-full h-2 rounded-full overflow-hidden" style={{background:'#f5bda5'}}>
+                  <div className="w-full h-2.5 rounded-full overflow-hidden bg-red-100">
                     <div
-                      className="h-full rounded-full progress-bar transition-all duration-500"
-                      style={{ width: `${progressPct}%`, background:'#e8a93a', '--prog-width': `${progressPct}%` } as React.CSSProperties}
+                      className="h-full rounded-full transition-all duration-500 bg-red-600"
+                      style={{ width: `${progressPct}%` }}
                     />
                   </div>
                 </div>
               )}
               {customer.orderType === 'delivery' && subtotal >= FREE_DELIVERY_THRESHOLD && (
-                <div className="border border-[#cfe2cd] rounded-2xl p-3.5 flex items-center gap-2 text-xs font-bold" style={{background:'#edf3ec',color:'#3b5334'}}>
-                  <span className="text-base">🎉</span> You qualify for free delivery!
+                <div className="border border-green-200 rounded-2xl p-4 flex items-center gap-3 text-sm font-bold bg-green-50 text-green-800 shadow-sm">
+                  <div className="w-8 h-8 rounded-full bg-green-200 flex items-center justify-center text-green-700">✓</div>
+                  You qualify for free delivery!
                 </div>
               )}
 
               {/* Cart Items */}
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {items.map(item => (
-                  <div key={item.cartItemId} className="p-3.5 rounded-2xl border border-[#e4d5c1] animate-slide-up" style={{background:'#f5ede0'}}>
-                    <div className="flex justify-between items-start gap-2">
+                  <div key={item.cartItemId} className="p-4 rounded-2xl border border-red-100 bg-white shadow-sm animate-slide-up">
+                    <div className="flex justify-between items-start gap-3">
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-bold text-[#2b2320] text-sm truncate">{item.menuItem.name}</h4>
+                        <h4 className="font-bold text-red-950 text-base truncate font-heading">{item.menuItem.name}</h4>
                         {item.selectedModifiers.length > 0 && (
-                          <p className="text-xs text-[#a89070] mt-0.5 line-clamp-1">
+                          <p className="text-xs text-red-900/60 mt-1 line-clamp-1 font-medium">
                             {item.selectedModifiers.map(m => m.modifierName).join(', ')}
                           </p>
                         )}
                         {item.instructions && (
-                          <p className="text-xs text-[#c1440e] mt-0.5 italic">&ldquo;{item.instructions}&rdquo;</p>
+                          <p className="text-xs text-red-500 mt-1 italic font-medium">&ldquo;{item.instructions}&rdquo;</p>
                         )}
                       </div>
-                      <span className="font-extrabold text-sm text-[#e8a93a] flex-shrink-0">
+                      <span className="font-black text-base text-red-600 shrink-0">
                         {item.totalPrice.toFixed(2)} {restaurant.currency_symbol}
                       </span>
                     </div>
 
-                    <div className="flex justify-between items-center pt-2.5">
-                      <button onClick={() => removeItem(item.cartItemId)} className="flex items-center gap-1 text-xs text-[#a89070] hover:text-rose-500 transition font-medium">
-                        <Trash2 className="w-3.5 h-3.5" /> Remove
+                    <div className="flex justify-between items-center pt-4">
+                      <button onClick={() => removeItem(item.cartItemId)} className="flex items-center gap-1 text-sm text-red-900/40 hover:text-red-500 transition-colors font-bold">
+                        <Trash2 className="w-4 h-4" /> Remove
                       </button>
-                      <div className="flex items-center rounded-xl p-0.5 gap-1 border border-[#e4d5c1]" style={{background:'#fdfaf5'}}>
-                        <button onClick={() => updateQuantity(item.cartItemId, -1)} className="w-7 h-7 flex items-center justify-center text-[#2b2320] hover:bg-[#f5ede0] rounded-lg transition">
-                          <Minus className="w-3 h-3" />
+                      <div className="flex items-center rounded-xl p-1 gap-1 border border-red-100 bg-red-50">
+                        <button onClick={() => updateQuantity(item.cartItemId, -1)} className="w-8 h-8 flex items-center justify-center text-red-950 hover:bg-white rounded-lg transition-colors bg-transparent border-0 shadow-none">
+                          <Minus className="w-4 h-4" />
                         </button>
-                        <span className="w-7 text-center text-xs font-black text-[#2b2320]">{item.quantity}</span>
-                        <button onClick={() => updateQuantity(item.cartItemId, 1)} className="w-7 h-7 flex items-center justify-center text-[#2b2320] hover:bg-[#f5ede0] rounded-lg transition">
-                          <Plus className="w-3 h-3" />
+                        <span className="w-8 text-center text-sm font-black text-red-950">{item.quantity}</span>
+                        <button onClick={() => updateQuantity(item.cartItemId, 1)} className="w-8 h-8 flex items-center justify-center text-red-950 hover:bg-white rounded-lg transition-colors bg-transparent border-0 shadow-none">
+                          <Plus className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
@@ -260,142 +253,122 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
               </div>
 
               {/* Promo Code */}
-              <div className="border border-[#e4d5c1] rounded-2xl p-3.5">
-                <p className="text-xs font-bold text-[#2b2320] mb-2 flex items-center gap-1.5"><Tag className="w-3.5 h-3.5 text-[#1e5b8c]" /> Promo Code</p>
+              <div className="border border-red-100 rounded-2xl p-4 bg-white shadow-sm">
+                <p className="text-sm font-bold text-red-950 mb-3 flex items-center gap-2"><Tag className="w-4 h-4 text-yellow-500" /> Promo Code</p>
                 {appliedPromo ? (
-                  <div className="flex items-center justify-between rounded-xl px-3 py-2 border border-[#cfe2cd]" style={{background:'#edf3ec'}}>
-                    <span className="text-xs font-bold text-[#3b5334]">✓ {appliedPromo.code} applied — {appliedPromo.discount} DH off</span>
-                    <button onClick={() => setAppliedPromo(null)} className="text-[#a89070] hover:text-[#2b2320]"><X className="w-3.5 h-3.5" /></button>
+                  <div className="flex items-center justify-between rounded-xl px-4 py-3 border border-green-200 bg-green-50">
+                    <span className="text-sm font-bold text-green-700">✓ {appliedPromo.code} applied — {appliedPromo.discount} DH off</span>
+                    <button onClick={() => setAppliedPromo(null)} className="text-green-600 hover:text-green-800"><X className="w-4 h-4" /></button>
                   </div>
                 ) : (
                   <div className="flex gap-2">
                     <input
-                      id="promo-input"
                       type="text"
-                      placeholder="Enter code (try WELCOME10)"
+                      placeholder="Enter code"
                       value={promoCode}
                       onChange={e => { setPromoCode(e.target.value); setPromoError(''); }}
-                      className="flex-1 px-3 py-2 text-xs border border-[#e4d5c1] rounded-xl focus:ring-2 focus:border-[#e8a93a] focus:outline-none" style={{background:'#fdfaf5'}}
+                      className="flex-1 px-4 py-3 text-sm font-bold border-2 border-red-100 rounded-xl focus:ring-0 focus:border-red-400 focus:outline-none bg-red-50 text-red-950 placeholder-red-300 transition-colors"
                     />
                     <button
-                      id="apply-promo"
                       onClick={handleApplyPromo}
-                      className="px-3 py-2 btn-cobalt text-xs"
+                      className="px-5 py-3 bg-red-900 hover:bg-red-950 text-white text-sm font-bold rounded-xl transition-colors"
                     >
                       Apply
                     </button>
                   </div>
                 )}
-                {promoError && <p className="text-xs text-rose-500 mt-1.5 font-medium">{promoError}</p>}
+                {promoError && <p className="text-sm text-red-500 mt-2 font-bold">{promoError}</p>}
               </div>
 
               {/* Checkout Form */}
-              <form id="checkout-form" onSubmit={handlePlaceOrder} className="space-y-4 pt-2 border-t border-[#e4d5c1]">
-                <h3 className="font-black text-[#2b2320] text-sm">تفاصيل الطلب — Order Details</h3>
+              <form id="checkout-form" onSubmit={handlePlaceOrder} className="space-y-5 pt-3">
+                <h3 className="font-black text-red-950 text-lg font-heading">Order Details</h3>
 
                 {/* Order Type */}
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-3">
                   {orderTypes.map(type => (
                     <button
                       key={type.id}
                       type="button"
-                      id={`type-${type.id}`}
                       onClick={() => setCustomer({ ...customer, orderType: type.id })}
-                      className={`py-3 px-2 rounded-xl text-xs font-bold flex flex-col items-center gap-1.5 border-2 transition-all ${
+                      className={`py-4 px-2 rounded-xl text-sm font-bold flex flex-col items-center gap-2 border-2 transition-all bg-white ${
                         customer.orderType === type.id
-                          ? 'border-[#c1440e] text-[#c1440e]'
-                          : 'border-[#e4d5c1] text-[#a89070] hover:border-[#c1440e]/40'
+                          ? 'border-red-600 text-red-600 shadow-md shadow-red-600/10'
+                          : 'border-red-100 text-red-900/60 hover:border-red-300'
                       }`}
-                      style={customer.orderType === type.id ? {background:'#fdf2ee'} : {background:'#fdfaf5'}}
                     >
                       <type.icon className="w-5 h-5" />
                       <span>{type.label}</span>
-                      <span className={`text-[9px] ${customer.orderType === type.id ? 'text-[#c1440e]' : 'text-[#a89070]'}`}>{type.desc}</span>
+                      <span className={`text-[10px] ${customer.orderType === type.id ? 'text-red-500' : 'text-red-900/40'}`}>{type.desc}</span>
                     </button>
                   ))}
                 </div>
 
                 {/* Input fields */}
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div className="relative">
-                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#a89070]" />
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-red-300" />
                     <input
-                      id="customer-name"
                       type="text"
                       placeholder="Full Name *"
                       required
                       value={customer.name}
                       onChange={e => setCustomer({ ...customer, name: e.target.value })}
-                      className="w-full pl-10 pr-3 py-3 text-sm border-2 border-[#e4d5c1] rounded-xl focus:ring-0 focus:border-[#c1440e] outline-none transition"
-                      style={{background:'#fdfaf5'}}
+                      className="w-full pl-12 pr-4 py-3.5 text-sm font-bold border-2 border-red-100 rounded-xl focus:ring-0 focus:border-red-400 outline-none bg-white text-red-950 placeholder-red-300 transition-colors shadow-sm"
                     />
                   </div>
                   <div className="relative">
-                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#a89070]" />
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-red-300" />
                     <input
-                      id="customer-phone"
                       type="tel"
                       placeholder="Phone (WhatsApp) *"
                       required
                       value={customer.phone}
                       onChange={e => setCustomer({ ...customer, phone: e.target.value })}
-                      className="w-full pl-10 pr-3 py-3 text-sm border-2 border-[#e4d5c1] rounded-xl focus:ring-0 focus:border-[#c1440e] outline-none transition"
-                      style={{background:'#fdfaf5'}}
+                      className="w-full pl-12 pr-4 py-3.5 text-sm font-bold border-2 border-red-100 rounded-xl focus:ring-0 focus:border-red-400 outline-none bg-white text-red-950 placeholder-red-300 transition-colors shadow-sm"
                     />
                   </div>
 
                   {customer.orderType === 'delivery' && (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {/* ── Map pin picker button ── */}
                       <button
-                        id="open-location-picker"
                         type="button"
                         onClick={() => setShowLocationPicker(true)}
-                        className="w-full flex items-center gap-3 px-4 py-3 border-2 rounded-xl transition-all text-left"
-                        style={{
-                          borderColor: dropoffGeo ? '#4a6741' : '#c1440e',
-                          background:  dropoffGeo ? '#edf3ec' : '#fdf2ee',
-                        }}
+                        className={`w-full flex items-center gap-4 px-4 py-3 border-2 rounded-xl transition-all text-left shadow-sm ${
+                          dropoffGeo ? 'border-green-500 bg-green-50' : 'border-red-100 bg-white hover:border-red-300'
+                        }`}
                       >
-                        <span
-                          className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
-                          style={{ background: dropoffGeo ? '#4a6741' : '#c1440e' }}
-                        >
-                          {dropoffGeo
-                            ? <MapPin className="w-4 h-4 text-white" />
-                            : <Navigation className="w-4 h-4 text-white" />
-                          }
+                        <span className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${dropoffGeo ? 'bg-green-500 text-white' : 'bg-red-50 text-red-500'}`}>
+                          {dropoffGeo ? <MapPin className="w-5 h-5" /> : <Navigation className="w-5 h-5" />}
                         </span>
                         <div className="flex-1 min-w-0">
                           {dropoffGeo ? (
                             <>
-                              <p className="text-xs font-bold" style={{ color: '#3b5334' }}>Adresse confirmée ✓</p>
-                              <p className="text-xs truncate" style={{ color: '#4a6741' }}>{dropoffGeo.address}</p>
+                              <p className="text-sm font-bold text-green-800">Address Confirmed ✓</p>
+                              <p className="text-xs text-green-600 truncate">{dropoffGeo.address}</p>
                             </>
                           ) : (
                             <>
-                              <p className="text-sm font-bold" style={{ color: '#c1440e' }}>Épingler ma position sur la carte</p>
-                              <p className="text-xs" style={{ color: '#a33a0c' }}>GPS auto + recherche adresse + pin draggable</p>
+                              <p className="text-sm font-bold text-red-950">Pin Location on Map</p>
+                              <p className="text-xs text-red-400 font-medium">Use GPS or drag the pin</p>
                             </>
                           )}
                         </div>
-                        <span className="text-xs flex-shrink-0" style={{ color: dropoffGeo ? '#4a6741' : '#c1440e' }}>
-                          {dropoffGeo ? 'Modifier' : 'Ouvrir →'}
+                        <span className={`text-sm font-bold shrink-0 ${dropoffGeo ? 'text-green-600' : 'text-red-500'}`}>
+                          {dropoffGeo ? 'Edit' : 'Open →'}
                         </span>
                       </button>
 
-                      {/* Fallback text input if customer prefers typing */}
                       <div className="relative">
-                        <FileText className="absolute left-3.5 top-3.5 w-4 h-4 text-[#a89070]" />
+                        <FileText className="absolute left-4 top-4 w-5 h-5 text-red-300" />
                         <textarea
-                          id="delivery-address"
                           rows={2}
-                          placeholder={dropoffGeo ? 'Précisions facultatives (étage, code porte…)' : 'Ou tapez votre adresse manuellement *'}
+                          placeholder={dropoffGeo ? 'Additional delivery instructions (optional)' : 'Or type address manually *'}
                           required={!dropoffGeo}
                           value={customer.deliveryAddress}
                           onChange={e => setCustomer({ ...customer, deliveryAddress: e.target.value })}
-                          className="w-full pl-10 pr-3 py-3 text-sm border-2 border-[#e4d5c1] rounded-xl focus:ring-0 focus:border-[#c1440e] outline-none transition resize-none"
-                          style={{background:'#fdfaf5'}}
+                          className="w-full pl-12 pr-4 py-3.5 text-sm font-bold border-2 border-red-100 rounded-xl focus:ring-0 focus:border-red-400 outline-none bg-white text-red-950 placeholder-red-300 transition-colors shadow-sm resize-none"
                         />
                       </div>
                     </div>
@@ -403,30 +376,26 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
 
                   {customer.orderType === 'dine_in' && (
                     <div className="relative">
-                      <Store className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#a89070]" />
+                      <Store className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-red-300" />
                       <input
-                        id="table-number"
                         type="text"
                         placeholder="Table Number *"
                         required
                         value={customer.tableNumber}
                         onChange={e => setCustomer({ ...customer, tableNumber: e.target.value })}
-                        className="w-full pl-10 pr-3 py-3 text-sm border-2 border-[#e4d5c1] rounded-xl focus:ring-0 focus:border-[#c1440e] outline-none transition"
-                        style={{background:'#fdfaf5'}}
+                        className="w-full pl-12 pr-4 py-3.5 text-sm font-bold border-2 border-red-100 rounded-xl focus:ring-0 focus:border-red-400 outline-none bg-white text-red-950 placeholder-red-300 transition-colors shadow-sm"
                       />
                     </div>
                   )}
 
                   <div className="relative">
-                    <FileText className="absolute left-3.5 top-3.5 w-4 h-4 text-[#a89070]" />
+                    <Utensils className="absolute left-4 top-4 w-5 h-5 text-red-300" />
                     <textarea
-                      id="order-notes"
                       rows={2}
-                      placeholder="Order notes (optional)"
+                      placeholder="Special instructions (optional)"
                       value={customer.notes}
                       onChange={e => setCustomer({ ...customer, notes: e.target.value })}
-                      className="w-full pl-10 pr-3 py-3 text-sm border-2 border-[#e4d5c1] rounded-xl focus:ring-0 focus:border-[#c1440e] outline-none transition resize-none"
-                      style={{background:'#fdfaf5'}}
+                      className="w-full pl-12 pr-4 py-3.5 text-sm font-bold border-2 border-red-100 rounded-xl focus:ring-0 focus:border-red-400 outline-none bg-white text-red-950 placeholder-red-300 transition-colors shadow-sm resize-none"
                     />
                   </div>
                 </div>
@@ -437,49 +406,48 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
 
         {/* ── Footer ────────────────────────────────── */}
         {items.length > 0 && (
-          <div className="p-4 border-t border-[#e4d5c1] space-y-3 flex-shrink-0" style={{background:'#fdfaf5'}}>
-            {/* Totals */}
-            <div className="space-y-1.5 text-sm">
-              <div className="flex justify-between text-[#a89070]">
+          <div className="p-5 border-t border-red-900/10 bg-white flex-shrink-0 shadow-[0_-4px_24px_rgba(0,0,0,0.02)]">
+            <div className="space-y-2 text-sm font-bold text-red-900/60 mb-4">
+              <div className="flex justify-between">
                 <span>Subtotal</span>
-                <span>{subtotal.toFixed(2)} {restaurant.currency_symbol}</span>
+                <span className="text-red-950">{subtotal.toFixed(2)} {restaurant.currency_symbol}</span>
               </div>
               {customer.orderType === 'delivery' && (
-                <div className="flex justify-between text-[#a89070]">
+                <div className="flex justify-between">
                   <span>Delivery Fee</span>
-                  <span>{subtotal >= FREE_DELIVERY_THRESHOLD ? <span className="text-[#4a6741] font-bold">FREE</span> : `${deliveryFee.toFixed(2)} ${restaurant.currency_symbol}`}</span>
+                  <span>{subtotal >= FREE_DELIVERY_THRESHOLD ? <span className="text-green-600 uppercase tracking-wider">Free</span> : <span className="text-red-950">{deliveryFee.toFixed(2)} {restaurant.currency_symbol}</span>}</span>
                 </div>
               )}
               {appliedPromo && appliedPromo.discount > 0 && (
-                <div className="flex justify-between font-semibold" style={{color:'#4a6741'}}>
+                <div className="flex justify-between text-green-600">
                   <span>Promo ({appliedPromo.code})</span>
                   <span>-{appliedPromo.discount.toFixed(2)} {restaurant.currency_symbol}</span>
                 </div>
               )}
-              <div className="flex justify-between font-black text-base text-[#2b2320] pt-2 border-t border-[#e4d5c1]">
+              <div className="flex justify-between font-black text-xl text-red-950 pt-3 border-t border-red-100 mt-3 font-heading">
                 <span>Total</span>
-                <span style={{color:'#c1440e'}}>{grandTotal.toFixed(2)} {restaurant.currency_symbol}</span>
+                <span className="text-red-600">{grandTotal.toFixed(2)} {restaurant.currency_symbol}</span>
               </div>
             </div>
 
-            {/* Place Order */}
             <button
-              id="place-order-btn"
               type="submit"
               form="checkout-form"
               disabled={submitting}
-              className="w-full btn-primary active:scale-[0.98] py-4 px-5 rounded-2xl text-sm flex items-center justify-between transition disabled:opacity-60"
+              className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white active:scale-[0.98] py-4 px-6 rounded-[20px] font-bold text-base flex items-center justify-between transition-all shadow-lg shadow-red-600/30"
             >
               {submitting ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /><span className="mx-auto">Placing Order…</span></>
+                <><Loader2 className="w-5 h-5 animate-spin" /><span className="mx-auto">Processing…</span></>
               ) : (
                 <>
-                  <span>🇲🇦 Place Order via WhatsApp</span>
-                  <ChevronRight className="w-5 h-5" />
+                  <span className="flex items-center gap-2 tracking-wide"><ShoppingBag className="w-5 h-5"/> Place Order via WhatsApp</span>
+                  <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+                    <ChevronRight className="w-5 h-5" />
+                  </div>
                 </>
               )}
             </button>
-            <p className="text-center text-[10px] text-slate-400">By placing an order you agree to our terms of service</p>
+            <p className="text-center text-xs text-red-900/40 mt-4 font-bold">By placing an order you agree to our terms of service</p>
           </div>
         )}
       </div>

@@ -1,24 +1,24 @@
 import type { Metadata, Viewport } from 'next';
-import { Lalezar, Tajawal } from 'next/font/google';
+import { Playfair_Display_SC, Karla } from 'next/font/google';
 import './globals.css';
 import { CartProvider } from '@/context/cart-context';
 
-const lalezar = Lalezar({
-  subsets: ['arabic', 'latin'],
-  weight: ['400'],
+const playfair = Playfair_Display_SC({
+  subsets: ['latin'],
+  weight: ['400', '700'],
   variable: '--font-heading',
   display: 'swap',
 });
 
-const tajawal = Tajawal({
-  subsets: ['arabic', 'latin'],
-  weight: ['300', '400', '500', '700', '800', '900'],
+const karla = Karla({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700'],
   variable: '--font-body',
   display: 'swap',
 });
 
 export const viewport: Viewport = {
-  themeColor: '#c1440e',
+  themeColor: '#dc2626',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -42,8 +42,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ar" dir="ltr" className={`antialiased scroll-smooth ${lalezar.variable} ${tajawal.variable}`}>
-      <body className={`${tajawal.className} min-h-[100dvh] text-[#2b2320] selection:bg-amber-200 selection:text-amber-900`} style={{background:'#f5ede0'}}>
+    <html lang="fr" dir="ltr" className={`antialiased scroll-smooth ${playfair.variable} ${karla.variable}`}>
+      <body className={`${karla.className} min-h-[100dvh] bg-[#fef2f2] text-[#450a0a] selection:bg-amber-200 selection:text-amber-900`}>
         <CartProvider>
           {children}
         </CartProvider>

@@ -3,38 +3,32 @@
 @tailwind utilities;
 
 /* ── Google Fonts ───────────────────────────────────── */
-/* Lalezar  — Arabic-influenced display (headings)        */
-/* Tajawal  — clean bilingual Arabic/Latin (body)         */
-@import url('https://fonts.googleapis.com/css2?family=Lalezar&family=Tajawal:wght@300;400;500;700;800;900&display=swap');
+/* Playfair Display SC  — elegant headers */
+/* Karla  — clean highly readable body */
+@import url('https://fonts.googleapis.com/css2?family=Karla:wght@300;400;500;600;700&family=Playfair+Display+SC:wght@400;700&display=swap');
 
 /* Leaflet Map Styles */
 @import "leaflet/dist/leaflet.css";
 
 /* ── Design Tokens ───────────────────────────────────── */
 :root {
-  /* ── Terracotta / Tagine Clay (primary) */
-  --brand-50:  #fdf2ee;
-  --brand-100: #fbe0d3;
-  --brand-200: #f5bda5;
-  --brand-400: #d96b3f;
-  --brand-500: #c1440e;
-  --brand-600: #a33a0c;
-  --brand-700: #842f09;
-  --brand-800: #5c2006;
+  /* ── Appetizing Red (primary) */
+  --brand-50:  #fef2f2;
+  --brand-100: #fee2e2;
+  --brand-200: #fecaca;
+  --brand-400: #f87171;
+  --brand-500: #dc2626;
+  --brand-600: #b91c1c;
+  --brand-700: #991b1b;
+  --brand-800: #7f1d1d;
+  --brand-900: #450a0a;
 
-  /* ── Zellige Blue / Chefchaouen Cobalt (secondary) */
-  --cobalt-50:  #eef4fb;
-  --cobalt-100: #d0e4f5;
-  --cobalt-300: #6da8d6;
-  --cobalt-500: #1e5b8c;
-  --cobalt-600: #184d77;
-  --cobalt-700: #123f62;
-
-  /* ── Saffron Yellow (CTA accent, stars) */
-  --saffron-300: #f5d06a;
-  --saffron-400: #e8a93a;
-  --saffron-500: #d4920f;
-  --saffron-600: #b57a0a;
+  /* ── Warm Gold (secondary / CTA) */
+  --saffron-300: #fde047;
+  --saffron-400: #facc15;
+  --saffron-500: #eab308;
+  --saffron-600: #ca8a04;
+  --saffron-700: #a16207;
 
   /* ── Henna Green (success, open states) */
   --henna-50:  #edf3ec;
@@ -43,26 +37,25 @@
   --henna-500: #4a6741;
   --henna-600: #3b5334;
 
-  /* ── Admin indigo (unchanged) */
+  /* ── Admin indigo (unchanged for standard UI elements if needed) */
   --admin-500: #6366f1;
   --admin-600: #4f46e5;
   --admin-700: #4338ca;
 
-  /* ── Sand / Warm Neutrals */
-  --surface:   #fdfaf5;
-  --bg:        #f5ede0;
-  --border:    #e4d5c1;
-  --muted:     #a89070;
-  --text:      #2b2320;
-  --text-2:    #6b4c38;
+  /* ── Warm Cream Neutrals */
+  --surface:   #ffffff;
+  --bg:        #fef2f2;
+  --border:    #fecaca;
+  --muted:     #991b1b;
+  --text:      #450a0a;
+  --text-2:    #7f1d1d;
 
   /* ── Effects */
-  --shadow-sm:   0 1px 3px 0 rgba(43,35,32,.08), 0 1px 2px -1px rgba(43,35,32,.06);
-  --shadow-md:   0 4px 16px -2px rgba(43,35,32,.13), 0 2px 6px -2px rgba(43,35,32,.08);
-  --shadow-lg:   0 20px 40px -8px rgba(43,35,32,.18), 0 8px 16px -4px rgba(43,35,32,.09);
-  --shadow-glow: 0 0 0 3px rgba(193,68,14,.25);
-  --shadow-cobalt: 0 0 0 3px rgba(30,91,140,.25);
-  --shadow-saffron: 0 0 0 3px rgba(232,169,58,.30);
+  --shadow-sm:   0 1px 3px 0 rgba(69,10,10,.08), 0 1px 2px -1px rgba(69,10,10,.06);
+  --shadow-md:   0 4px 16px -2px rgba(69,10,10,.13), 0 2px 6px -2px rgba(69,10,10,.08);
+  --shadow-lg:   0 20px 40px -8px rgba(69,10,10,.18), 0 8px 16px -4px rgba(69,10,10,.09);
+  --shadow-glow: 0 0 0 3px rgba(220,38,38,.25);
+  --shadow-saffron: 0 0 0 3px rgba(202,138,4,.30);
 }
 
 /* ── Base ─────────────────────────────────────────────── */
@@ -74,16 +67,16 @@ html {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── Moroccan Display Font (Lalezar) ────────────────── */
+/* ── Display Font (Playfair Display SC) ────────────────── */
 h1, h2, h3, h4, h5, h6,
 .font-heading {
-  font-family: var(--font-heading, 'Lalezar'), 'Tajawal', system-ui, sans-serif;
-  font-weight: 400; /* Lalezar is display weight by default */
-  letter-spacing: 0.01em;
+  font-family: var(--font-heading, 'Playfair Display SC'), 'Karla', system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 body {
-  font-family: var(--font-body, 'Tajawal'), system-ui, sans-serif;
+  font-family: var(--font-body, 'Karla'), system-ui, sans-serif;
   color: var(--text);
   background: var(--bg);
   touch-action: pan-y pinch-zoom;
@@ -202,22 +195,22 @@ body {
   background-image:
     repeating-linear-gradient(
       45deg,
-      rgba(193,68,14,.055) 0px,
-      rgba(193,68,14,.055) 1px,
+      rgba(220,38,38,.055) 0px,
+      rgba(220,38,38,.055) 1px,
       transparent 1px,
       transparent 10px
     ),
     repeating-linear-gradient(
       -45deg,
-      rgba(30,91,140,.045) 0px,
-      rgba(30,91,140,.045) 1px,
+      rgba(202,138,4,.045) 0px,
+      rgba(202,138,4,.045) 1px,
       transparent 1px,
       transparent 10px
     ),
     repeating-linear-gradient(
       0deg,
-      rgba(232,169,58,.03) 0px,
-      rgba(232,169,58,.03) 1px,
+      rgba(185,28,28,.03) 0px,
+      rgba(185,28,28,.03) 1px,
       transparent 1px,
       transparent 10px
     );
@@ -241,54 +234,54 @@ body {
   border-top: 3px solid transparent;
   border-image: repeating-linear-gradient(
     90deg,
-    #c1440e 0px,  #c1440e 6px,
-    #e8a93a 6px,  #e8a93a 12px,
-    #1e5b8c 12px, #1e5b8c 18px,
-    #e8a93a 18px, #e8a93a 24px
+    #dc2626 0px,  #dc2626 6px,
+    #eab308 6px,  #eab308 12px,
+    #991b1b 12px, #991b1b 18px,
+    #eab308 18px, #eab308 24px
   ) 1;
 }
 .moroccan-border-bottom {
   border-bottom: 3px solid transparent;
   border-image: repeating-linear-gradient(
     90deg,
-    #c1440e 0px,  #c1440e 6px,
-    #e8a93a 6px,  #e8a93a 12px,
-    #1e5b8c 12px, #1e5b8c 18px,
-    #e8a93a 18px, #e8a93a 24px
+    #dc2626 0px,  #dc2626 6px,
+    #eab308 6px,  #eab308 12px,
+    #991b1b 12px, #991b1b 18px,
+    #eab308 18px, #eab308 24px
   ) 1;
 }
 
 /* ── Button Utilities ─────────────────────────────────── */
 .btn-primary {
-  background: #c1440e;
+  background: #dc2626;
   color: #fff;
   font-weight: 700;
   border-radius: 0.75rem;
   transition: background .18s, transform .15s;
-  box-shadow: 0 4px 14px rgba(193,68,14,.35);
+  box-shadow: 0 4px 14px rgba(220,38,38,.35);
 }
-.btn-primary:hover  { background: #a33a0c; }
+.btn-primary:hover  { background: #b91c1c; }
 .btn-primary:active { transform: scale(.97); }
 
 .btn-saffron {
-  background: #e8a93a;
-  color: #2b2320;
+  background: #eab308;
+  color: #450a0a;
   font-weight: 700;
   border-radius: 0.75rem;
   transition: background .18s;
-  box-shadow: 0 4px 14px rgba(232,169,58,.30);
+  box-shadow: 0 4px 14px rgba(234,179,8,.30);
 }
-.btn-saffron:hover { background: #d4920f; }
+.btn-saffron:hover { background: #ca8a04; }
 
-.btn-cobalt {
-  background: #1e5b8c;
+.btn-secondary {
+  background: #991b1b;
   color: #fff;
   font-weight: 700;
   border-radius: 0.75rem;
   transition: background .18s;
-  box-shadow: 0 4px 14px rgba(30,91,140,.30);
+  box-shadow: 0 4px 14px rgba(153,27,27,.30);
 }
-.btn-cobalt:hover { background: #184d77; }
+.btn-secondary:hover { background: #7f1d1d; }
 
 /* ── Leaflet Marker Animations ───────────────────────── */
 .pulse-marker {
@@ -302,16 +295,16 @@ body {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: rgba(193,68,14,.35);
+  background: rgba(220,38,38,.35);
   animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
 }
 .pulse-marker .dot {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #c1440e;
+  background: #dc2626;
   border: 3px solid white;
-  box-shadow: 0 2px 8px rgba(193,68,14,0.6);
+  box-shadow: 0 2px 8px rgba(220,38,38,0.6);
   animation: pulse-dot 1.5s ease-in-out infinite;
   z-index: 1;
 }
