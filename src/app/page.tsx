@@ -42,19 +42,19 @@ export default function MarketplacePage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 font-[Outfit]">
+    <div className="min-h-screen zellige-bg">
       {/* Header */}
-      <header className="bg-white border-b border-slate-100 sticky top-0 z-30">
+      <header className="bg-[#fdfaf5] border-b border-[#e4d5c1] sticky top-0 z-30 moroccan-border-bottom shadow-sm">
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-md" style={{background:'linear-gradient(135deg,#1e5b8c,#c1440e)'}}>
               <span className="text-white font-black text-sm">DL</span>
             </div>
-            <h1 className="font-black text-xl text-slate-900 tracking-tight">DelivriLi</h1>
+            <h1 className="font-black text-xl text-[#2b2320] tracking-tight" style={{fontFamily:'var(--font-heading,Lalezar),sans-serif'}}>DelivriLi</h1>
           </div>
           <Link
             href="/signup"
-            className="text-sm font-bold text-indigo-600 bg-indigo-50 px-4 py-2 rounded-full hover:bg-indigo-100 transition-colors flex items-center gap-2"
+            className="text-sm font-bold text-[#1e5b8c] bg-[#eef4fb] px-4 py-2 rounded-full hover:bg-[#d0e4f5] transition-colors flex items-center gap-2 border border-[#d0e4f5]"
           >
             <Store className="w-4 h-4" />
             Partner with us
@@ -63,25 +63,40 @@ export default function MarketplacePage() {
       </header>
 
       {/* Hero Section */}
-      <div className="bg-white border-b border-slate-100">
-        <div className="max-w-5xl mx-auto px-4 py-12 md:py-20 text-center">
-          <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight mb-4">
-            Order food from your <br className="hidden md:block" />
-            <span className="text-indigo-600">favorite restaurants.</span>
+      <div className="relative overflow-hidden" style={{background:'linear-gradient(135deg,#5c2006 0%,#c1440e 45%,#1e5b8c 100%)'}}>
+        {/* Zellige overlay */}
+        <div className="absolute inset-0 pointer-events-none" style={{backgroundImage:'repeating-linear-gradient(45deg,rgba(255,255,255,.05) 0px,rgba(255,255,255,.05) 1px,transparent 1px,transparent 12px),repeating-linear-gradient(-45deg,rgba(232,169,58,.07) 0px,rgba(232,169,58,.07) 1px,transparent 1px,transparent 12px)'}} />
+        {/* Saffron stripe bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-1" style={{background:'linear-gradient(90deg,#e8a93a,#c1440e,#1e5b8c,#c1440e,#e8a93a)'}} />
+        <div className="max-w-5xl mx-auto px-4 py-14 md:py-22 text-center relative z-10">
+          <div className="inline-block mb-3 text-4xl animate-lantern">🏮</div>
+          <h2 className="text-4xl md:text-6xl text-white mb-4" style={{fontFamily:'var(--font-heading,Lalezar),sans-serif',letterSpacing:'0.02em',lineHeight:1.15}}>
+            تذوّق أصيل المأكولات المغربية
+            <br className="hidden md:block" />
+            <span style={{color:'#e8a93a'}}>على طبق واحد.</span>
           </h2>
-          <p className="text-slate-500 text-lg md:text-xl max-w-2xl mx-auto mb-8 font-medium">
-            Fast delivery, live tracking, and the best local menus all in one place.
+          <p className="text-orange-100 text-lg md:text-xl max-w-2xl mx-auto mb-8 font-medium">
+            Savour authentic Moroccan flavours — fast delivery, live tracking, the best local restaurants.
           </p>
 
-          {/* Global Search Bar Placeholder */}
-          <div className="max-w-xl mx-auto bg-white border-2 border-slate-100 rounded-2xl p-2 flex items-center shadow-sm focus-within:border-indigo-600 focus-within:ring-4 focus-within:ring-indigo-600/10 transition-all">
-            <Search className="w-6 h-6 text-slate-400 ml-3" />
+          {/* Moroccan Category Chips */}
+          <div className="flex flex-wrap justify-center gap-2 mb-8">
+            {[['🫕','Tagine'],['🍚','Couscous'],['🥐','Pastilla'],['🫓','Msemen'],['🍲','Harira'],['🧆','Kefta'],['🍋','Chermoula']].map(([emoji,label])=>(
+              <span key={label} className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-bold text-white border border-white/30 hover:bg-white/20 transition-colors cursor-pointer" style={{background:'rgba(255,255,255,.12)',backdropFilter:'blur(8px)'}}>
+                {emoji} {label}
+              </span>
+            ))}
+          </div>
+
+          {/* Search Bar */}
+          <div className="max-w-xl mx-auto bg-[#fdfaf5] border-2 border-[#e4d5c1] rounded-2xl p-2 flex items-center shadow-2xl focus-within:border-[#e8a93a] focus-within:ring-4 focus-within:ring-[#e8a93a]/20 transition-all">
+            <Search className="w-6 h-6 text-[#a89070] ml-3" />
             <input
               type="text"
-              placeholder="Search for restaurants or cuisines..."
-              className="w-full px-4 py-3 outline-none text-slate-700 font-medium bg-transparent"
+              placeholder="Search restaurants or dishes..."
+              className="w-full px-4 py-3 outline-none text-[#2b2320] font-medium bg-transparent placeholder-[#a89070]"
             />
-            <button className="bg-indigo-600 hover:bg-indigo-700 text-white font-black px-6 py-3 rounded-xl transition-colors">
+            <button className="btn-primary px-6 py-3">
               Find
             </button>
           </div>
@@ -91,7 +106,7 @@ export default function MarketplacePage() {
       {/* Restaurants List */}
       <main className="max-w-5xl mx-auto px-4 py-12">
         <div className="flex items-center justify-between mb-8">
-          <h3 className="text-2xl font-black text-slate-900">Popular Restaurants</h3>
+          <h3 className="text-3xl text-[#2b2320]" style={{fontFamily:'var(--font-heading,Lalezar),sans-serif'}}>🍽️ المطاعم الشعبية</h3>
         </div>
 
         {restaurants && restaurants.length > 0 ? (
@@ -105,10 +120,10 @@ export default function MarketplacePage() {
               <Link
                 key={restaurant.id}
                 href={`/${restaurant.slug}`}
-                className="group bg-white border border-slate-100 rounded-3xl overflow-hidden hover:shadow-xl hover:shadow-indigo-600/5 hover:border-indigo-100 transition-all active:scale-[0.98]"
+                className="group bg-[#fdfaf5] border border-[#e4d5c1] rounded-3xl overflow-hidden hover:shadow-2xl hover:shadow-[#c1440e]/12 hover:border-[#c1440e]/40 transition-all duration-300 active:scale-[0.98]"
               >
-                {/* Image Placeholder */}
-                <div className="w-full h-48 bg-slate-100 relative overflow-hidden">
+                {/* Image with Moroccan arch clip */}
+                <div className="w-full h-48 bg-[#f5ede0] relative overflow-hidden arch-clip">
                   {restaurant.cover_image_url || restaurant.logo_url ? (
                     <img
                       src={restaurant.cover_image_url || restaurant.logo_url}
@@ -116,18 +131,18 @@ export default function MarketplacePage() {
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-tr from-indigo-100 to-purple-50 flex items-center justify-center">
-                      <Store className="w-12 h-12 text-indigo-300" />
+                    <div className="w-full h-full flex items-center justify-center" style={{background:'linear-gradient(135deg,#fdf2ee,#d0e4f5,#f5ede0)'}}>
+                      <Store className="w-12 h-12 text-[#c1440e]" style={{opacity:.4}} />
                     </div>
                   )}
-                  {/* Delivery time & New badges */}
+                  {/* Badges */}
                   <div className="absolute bottom-3 right-3 flex items-center gap-2">
-                    {isNew && (
-                      <div className="bg-rose-500/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-black text-white shadow-sm flex items-center gap-1 animate-pulse">
+                    {(restaurant.created_at && (new Date().getTime()-new Date(restaurant.created_at).getTime())<7*24*60*60*1000) && (
+                      <div className="bg-[#c1440e]/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-black text-white shadow-sm flex items-center gap-1 animate-pulse">
                         <Flame className="w-3.5 h-3.5" /> NEW
                       </div>
                     )}
-                    <div className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-slate-700 shadow-sm">
+                    <div className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-[#2b2320] shadow-sm">
                       25-40 min
                     </div>
                   </div>
@@ -135,12 +150,12 @@ export default function MarketplacePage() {
 
                 <div className="p-5">
                   <div className="flex items-start justify-between mb-2">
-                    <h4 className="font-black text-lg text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-1">
+                    <h4 className="font-bold text-lg text-[#2b2320] group-hover:text-[#c1440e] transition-colors line-clamp-1" style={{fontFamily:'var(--font-heading,Lalezar),sans-serif'}}>
                       {restaurant.name}
                     </h4>
-                    <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-lg">
-                      <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
-                      <span className="text-xs font-bold text-slate-700">4.8</span>
+                    <div className="flex items-center gap-1 bg-[#f5ede0] px-2 py-1 rounded-lg flex-shrink-0">
+                      <Star className="w-3.5 h-3.5 text-[#e8a93a] fill-[#e8a93a]" />
+                      <span className="text-xs font-bold text-[#2b2320]">4.8</span>
                     </div>
                   </div>
 
@@ -155,20 +170,20 @@ export default function MarketplacePage() {
                     {restaurant.address || "Casablanca, Morocco"}
                   </p>
 
-                  <div className="flex items-center gap-3 border-t border-slate-50 pt-4">
+                  <div className="flex items-center gap-3 border-t border-[#e4d5c1] pt-4">
                     <div className="flex-1">
-                      <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Delivery</p>
-                      <p className="font-bold text-slate-700 text-sm">
-                        {restaurant.delivery_fee === 0 ? "Free" : `${restaurant.delivery_fee} ${restaurant.currency_symbol}`}
+                      <p className="text-xs text-[#a89070] font-medium uppercase tracking-wider">Delivery</p>
+                      <p className="font-bold text-[#2b2320] text-sm">
+                        {restaurant.delivery_fee === 0 ? <span className="text-[#4a6741]">Free</span> : `${restaurant.delivery_fee} ${restaurant.currency_symbol}`}
                       </p>
                     </div>
-                    <div className="flex-1 border-l border-slate-100 pl-3">
-                      <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Min. Order</p>
-                      <p className="font-bold text-slate-700 text-sm">
+                    <div className="flex-1 border-l border-[#e4d5c1] pl-3">
+                      <p className="text-xs text-[#a89070] font-medium uppercase tracking-wider">Min. Order</p>
+                      <p className="font-bold text-[#2b2320] text-sm">
                         {restaurant.min_order_amount} {restaurant.currency_symbol}
                       </p>
                     </div>
-                    <div className="w-10 h-10 rounded-full bg-slate-50 group-hover:bg-indigo-600 group-hover:text-white text-slate-400 flex items-center justify-center transition-colors">
+                    <div className="w-10 h-10 rounded-full bg-[#f5ede0] group-hover:bg-[#1e5b8c] group-hover:text-white text-[#a89070] flex items-center justify-center transition-all duration-200">
                       <ArrowRight className="w-5 h-5" />
                     </div>
                   </div>
@@ -204,15 +219,15 @@ export default function MarketplacePage() {
             )})}
           </div>
         ) : (
-          <div className="bg-white border border-slate-100 rounded-3xl p-12 text-center">
-            <Store className="w-16 h-16 text-slate-200 mx-auto mb-4" />
-            <h4 className="text-xl font-black text-slate-900 mb-2">No restaurants found</h4>
-            <p className="text-slate-500 mb-6 max-w-md mx-auto">
+          <div className="bg-[#fffdf9] border border-[#e8ddd4] rounded-3xl p-12 text-center">
+            <Store className="w-16 h-16 text-[#e8ddd4] mx-auto mb-4" />
+            <h4 className="text-xl font-black text-[#2c1810] mb-2" style={{fontFamily: 'Amiri, Georgia, serif'}}>لا توجد مطاعم حتى الآن</h4>
+            <p className="text-[#a8917e] mb-6 max-w-md mx-auto">
               There are currently no active restaurants on the platform. If you're a restaurant owner, partner with us!
             </p>
             <Link
               href="/signup"
-              className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-full font-bold transition-colors"
+              className="inline-flex items-center gap-2 bg-[#c1440e] hover:bg-[#a33a0c] text-white px-6 py-3 rounded-full font-bold transition-colors"
             >
               Add Your Restaurant <ArrowUpRight className="w-4 h-4" />
             </Link>
@@ -221,13 +236,15 @@ export default function MarketplacePage() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-slate-100 py-12 mt-12">
+      <footer className="moroccan-border-top py-14 mt-12" style={{background:'linear-gradient(135deg,#2b2320,#5c2006)'}}>
         <div className="max-w-5xl mx-auto px-4 text-center">
-          <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-indigo-600/20">
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl" style={{background:'linear-gradient(135deg,#1e5b8c,#c1440e)'}}>
             <span className="text-white font-black text-xl">DL</span>
           </div>
-          <p className="text-slate-400 font-medium text-sm">
-            © {new Date().getFullYear()} DelivriLi. All rights reserved.
+          <p className="text-3xl mb-2 animate-lantern">🏮</p>
+          <p className="text-[#e8a93a] font-medium text-base mb-1" style={{fontFamily:'var(--font-heading,Lalezar),sans-serif'}}>مرحباً بكم في ديليفريلي</p>
+          <p className="text-orange-200/50 font-medium text-xs">
+            © {new Date().getFullYear()} DelivriLi · Casablanca, Maroc
           </p>
         </div>
       </footer>

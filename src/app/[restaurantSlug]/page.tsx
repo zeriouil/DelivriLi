@@ -105,15 +105,15 @@ export default function CustomerMenuPage({ params }: { params: { restaurantSlug:
   };
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center bg-slate-50"><Loader2 className="w-10 h-10 animate-spin text-indigo-600" /></div>;
+    return <div className="min-h-screen flex items-center justify-center bg-[#faf6f0]"><Loader2 className="w-10 h-10 animate-spin text-[#c1440e]" /></div>;
   }
 
   if (!restaurant) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6 text-center">
-        <Store className="w-16 h-16 text-slate-300 mb-4" />
-        <h2 className="text-2xl font-black text-slate-900 mb-2">Restaurant Not Found</h2>
-        <p className="text-slate-500">The restaurant you are looking for does not exist or has been removed.</p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#faf6f0] p-6 text-center">
+        <Store className="w-16 h-16 text-[#e8ddd4] mb-4" />
+        <h2 className="text-2xl font-black text-[#2c1810] mb-2" style={{fontFamily: 'Amiri, Georgia, serif'}}>المطعم غير موجود</h2>
+        <p className="text-[#a8917e]">The restaurant you are looking for does not exist or has been removed.</p>
       </div>
     );
   }
@@ -133,11 +133,13 @@ export default function CustomerMenuPage({ params }: { params: { restaurantSlug:
   const itemCountByCat = (catId: string) => items.filter(i => i.category_id === catId).length;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 pb-28 font-[Outfit]">
+    <div className="min-h-screen text-[#2b2320] pb-28 zellige-bg">
       {/* ── Hero Header ─────────────────────────────── */}
       <header 
-        className="relative overflow-hidden bg-gradient-to-br from-emerald-700 via-emerald-600 to-teal-500 text-white pt-10 pb-8 px-4 rounded-b-[2rem] shadow-xl"
-        style={restaurant.cover_image_url ? { backgroundImage: `url(${restaurant.cover_image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
+        className="relative overflow-hidden text-white pt-10 pb-8 px-4 rounded-b-[2rem] shadow-xl"
+        style={restaurant.cover_image_url
+          ? { backgroundImage: `url(${restaurant.cover_image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+          : { background: 'linear-gradient(135deg, #5c2006 0%, #c1440e 55%, #d96b3f 100%)' }}
       >
         {/* Dark Overlay for readability when using image */}
         {restaurant.cover_image_url && <div className="absolute inset-0 bg-black/50 z-0"></div>}
@@ -145,8 +147,9 @@ export default function CustomerMenuPage({ params }: { params: { restaurantSlug:
         {/* Animated blobs (hide if using image) */}
         {!restaurant.cover_image_url && (
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
-            <div className="animate-blob absolute -top-10 -right-10 w-52 h-52 rounded-full bg-teal-400/30 blur-3xl" />
-            <div className="animate-blob absolute bottom-0 -left-12 w-44 h-44 rounded-full bg-emerald-900/40 blur-2xl" style={{ animationDelay: '-3s' }} />
+            <div className="animate-blob absolute -top-10 -right-10 w-52 h-52 rounded-full bg-[#d96b3f]/25 blur-3xl" />
+            <div className="animate-blob absolute bottom-0 -left-12 w-44 h-44 rounded-full bg-[#5c2006]/40 blur-2xl" style={{ animationDelay: '-3s' }} />
+            <div className="animate-blob absolute top-1/2 left-1/3 w-36 h-36 rounded-full bg-[#d4a017]/15 blur-2xl" style={{ animationDelay: '-1.5s' }} />
           </div>
         )}
 
@@ -163,26 +166,26 @@ export default function CustomerMenuPage({ params }: { params: { restaurantSlug:
             <div className="flex-1 min-w-0">
               <h1 className="text-2xl font-black tracking-tight truncate">{restaurant.name}</h1>
               {restaurant.description && (
-                <p className="text-emerald-50 text-sm mt-1 line-clamp-2 leading-tight">
+                <p className="text-orange-100 text-sm mt-1 line-clamp-2 leading-tight">
                   {restaurant.description}
                 </p>
               )}
-              <p className="text-emerald-100/80 text-xs flex items-center gap-1 mt-1.5">
+              <p className="text-orange-200/80 text-xs flex items-center gap-1 mt-1.5">
                 <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-                <span className="truncate">{restaurant.address || 'Casablanca, Morocco'}</span>
+                <span className="truncate">{restaurant.address || 'الدار البيضاء، المغرب'}</span>
               </p>
               {/* Rating + delivery meta */}
               <div className="flex items-center gap-3 mt-2 flex-wrap">
                 <span className="flex items-center gap-1 text-xs bg-white/20 rounded-full px-2 py-0.5 font-semibold">
-                  <Star className="w-3 h-3 fill-amber-300 text-amber-300" /> 4.8
+                  <Star className="w-3 h-3 fill-[#e8a93a] text-[#e8a93a]" /> 4.8
                 </span>
                 <span className="flex items-center gap-1 text-xs bg-white/20 rounded-full px-2 py-0.5 font-semibold">
                   <Clock className="w-3 h-3" /> 25-40 min
                 </span>
                 <span className="flex items-center gap-1 text-xs bg-white/20 rounded-full px-2 py-0.5 font-semibold">
-                  <Zap className="w-3 h-3 text-amber-300" /> {restaurant.delivery_fee === 0 ? 'Free' : `${restaurant.delivery_fee} ${restaurant.currency_symbol}`} delivery
+                  <Zap className="w-3 h-3 text-[#e8a93a]" /> {restaurant.delivery_fee === 0 ? 'Free' : `${restaurant.delivery_fee} ${restaurant.currency_symbol}`} delivery
                 </span>
-                <span className="text-xs bg-emerald-400/30 text-emerald-50 rounded-full px-2 py-0.5 font-bold border border-emerald-300/50">
+                <span className="text-xs rounded-full px-2 py-0.5 font-bold border border-[#cfe2cd]/50" style={{background:'rgba(74,103,65,.35)',color:'#edf3ec'}}>
                   ● Open Now
                 </span>
               </div>
@@ -216,7 +219,7 @@ export default function CustomerMenuPage({ params }: { params: { restaurantSlug:
       </header>
 
       {/* ── Sticky Categories + Sort ─────────────────── */}
-      <div className="sticky top-0 z-30 glass border-b border-slate-200/60 py-3 px-4">
+      <div className="sticky top-0 z-30 glass border-b border-[#e8ddd4]/60 py-3 px-4">
         <div className="max-w-md mx-auto flex items-center gap-2">
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar flex-1">
             <button
@@ -224,9 +227,10 @@ export default function CustomerMenuPage({ params }: { params: { restaurantSlug:
               onClick={() => setSelectedCategory('all')}
               className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-200 ${
                 selectedCategory === 'all'
-                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 scale-105'
-                  : 'bg-white text-slate-600 border border-slate-200 hover:border-emerald-400 hover:text-emerald-600'
+                  ? 'text-white shadow-md scale-105'
+                  : 'text-[#6b4c38] border border-[#e4d5c1] hover:border-[#c1440e]/50 hover:text-[#c1440e]'
               }`}
+              style={selectedCategory === 'all' ? {background:'#c1440e',boxShadow:'0 4px 10px rgba(193,68,14,.30)'} : {background:'#fdfaf5'}}
             >
               All
             </button>
@@ -237,12 +241,13 @@ export default function CustomerMenuPage({ params }: { params: { restaurantSlug:
                 onClick={() => setSelectedCategory(cat.id)}
                 className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-200 flex items-center gap-1.5 ${
                   selectedCategory === cat.id
-                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 scale-105'
-                    : 'bg-white text-slate-600 border border-slate-200 hover:border-emerald-400 hover:text-emerald-600'
+                    ? 'text-white shadow-md scale-105'
+                    : 'text-[#6b4c38] border border-[#e4d5c1] hover:border-[#c1440e]/50 hover:text-[#c1440e]'
                 }`}
+                style={selectedCategory === cat.id ? {background:'#c1440e',boxShadow:'0 4px 10px rgba(193,68,14,.30)'} : {background:'#fdfaf5'}}
               >
                 {cat.name}
-                <span className={`text-[10px] rounded-full px-1.5 py-0 font-bold ${selectedCategory === cat.id ? 'bg-white/20' : 'bg-slate-100'}`}>
+                <span className={`text-[10px] rounded-full px-1.5 py-0 font-bold`} style={selectedCategory === cat.id ? {background:'rgba(255,255,255,.2)'} : {background:'#f5ede0'}}>
                   {itemCountByCat(cat.id)}
                 </span>
               </button>
@@ -254,7 +259,8 @@ export default function CustomerMenuPage({ params }: { params: { restaurantSlug:
             <button
               id="sort-btn"
               onClick={() => setShowSort(s => !s)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-white border border-slate-200 hover:border-slate-300 text-slate-600 transition"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border border-[#e4d5c1] hover:border-[#1e5b8c]/50 text-[#6b4c38] transition"
+              style={{background:'#fdfaf5'}}
             >
               <TrendingUp className="w-3 h-3" />
               Sort
@@ -270,7 +276,8 @@ export default function CustomerMenuPage({ params }: { params: { restaurantSlug:
                   <button
                     key={val}
                     onClick={() => { setSortBy(val); setShowSort(false); }}
-                    className={`w-full text-left px-4 py-2.5 text-xs font-semibold transition hover:bg-emerald-50 ${sortBy === val ? 'text-emerald-600 bg-emerald-50' : 'text-slate-700'}`}
+                    className={`w-full text-left px-4 py-2.5 text-xs font-semibold transition ${sortBy === val ? 'text-[#c1440e] font-bold' : 'text-[#2b2320] hover:text-[#c1440e]'}`}
+                  style={sortBy === val ? {background:'#fdf2ee'} : {}}
                   >
                     {label}
                   </button>
@@ -286,9 +293,9 @@ export default function CustomerMenuPage({ params }: { params: { restaurantSlug:
         {filteredItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-in">
             <div className="text-6xl mb-4">🔍</div>
-            <h3 className="font-bold text-slate-700 text-lg">No items found</h3>
-            <p className="text-slate-400 text-sm mt-1">Try a different search or category</p>
-            <button onClick={() => { setSearchQuery(''); setSelectedCategory('all'); }} className="mt-5 px-5 py-2.5 bg-emerald-600 text-white rounded-full text-sm font-bold hover:bg-emerald-700 transition">
+            <h3 className="font-bold text-[#2b2320] text-lg">No items found</h3>
+            <p className="text-[#a89070] text-sm mt-1">Try a different search or category</p>
+            <button onClick={() => { setSearchQuery(''); setSelectedCategory('all'); }} className="mt-5 px-5 py-2.5 btn-primary text-sm rounded-full">
               Clear Filters
             </button>
           </div>
@@ -298,8 +305,8 @@ export default function CustomerMenuPage({ params }: { params: { restaurantSlug:
               key={item.id}
               id={`item-${item.id}`}
               onClick={() => item.is_available && setActiveModalItem(item)}
-              className={`bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden card-lift animate-slide-up ${!item.is_available ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
-              style={{ animationDelay: `${idx * 0.06}s` }}
+              className={`rounded-2xl shadow-sm border border-[#e4d5c1] overflow-hidden card-lift animate-slide-up ${!item.is_available ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+              style={{background:'#fdfaf5', animationDelay: `${idx * 0.06}s`}}
             >
               <div className="flex gap-0">
                 {/* Text side */}
@@ -316,10 +323,10 @@ export default function CustomerMenuPage({ params }: { params: { restaurantSlug:
                       </span>
                     )}
                   </div>
-                  <h3 className="font-bold text-slate-900 text-base leading-tight">{item.name}</h3>
-                  <p className="text-slate-500 text-xs line-clamp-2 leading-relaxed">{item.description}</p>
+                  <h3 className="font-bold text-[#2b2320] text-base leading-tight">{item.name}</h3>
+                  <p className="text-[#a89070] text-xs line-clamp-2 leading-relaxed">{item.description}</p>
                   <div className="flex items-center gap-3 pt-1">
-                    <span className="text-emerald-600 font-extrabold text-sm">
+                    <span className="font-extrabold text-sm" style={{color:'#c1440e'}}>
                       {Number(item.base_price).toFixed(2)} {restaurant.currency_symbol}
                     </span>
                     {ITEM_CALORIES[item.id] && (
@@ -336,7 +343,7 @@ export default function CustomerMenuPage({ params }: { params: { restaurantSlug:
                   {item.image_url ? (
                     <img src={item.image_url} alt={item.name} className="w-full h-full object-cover rounded-xl bg-slate-100" />
                   ) : (
-                    <div className="w-full h-full rounded-xl bg-gradient-to-br from-emerald-50 to-teal-100 flex items-center justify-center text-4xl shadow-inner overflow-hidden">
+                    <div className="w-full h-full rounded-xl flex items-center justify-center text-4xl shadow-inner overflow-hidden" style={{background:'linear-gradient(135deg,#fdf2ee,#d0e4f5)'}}>
                       {ITEM_ICONS[item.id] || '🍽️'}
                     </div>
                   )}
@@ -354,7 +361,7 @@ export default function CustomerMenuPage({ params }: { params: { restaurantSlug:
                   </button>
                   {/* Add button */}
                   {item.is_available && (
-                    <div className="absolute bottom-1 right-1 bg-emerald-600 text-white p-1.5 rounded-full shadow-md shadow-emerald-600/40">
+                    <div className="absolute bottom-1 right-1 bg-[#c1440e] text-white p-1.5 rounded-full shadow-md shadow-[#c1440e]/40">
                       <ShoppingBag className="w-3 h-3" />
                     </div>
                   )}
@@ -372,15 +379,16 @@ export default function CustomerMenuPage({ params }: { params: { restaurantSlug:
             <button
               id="view-cart-btn"
               onClick={() => setIsCartOpen(true)}
-              className={`w-full bg-slate-900 hover:bg-black text-white p-4 rounded-2xl shadow-2xl shadow-black/30 flex items-center justify-between font-bold text-sm transition-all duration-200 active:scale-95 ${cartBump ? 'scale-105' : 'scale-100'}`}
+              className={`w-full text-white p-4 rounded-2xl shadow-2xl flex items-center justify-between font-bold text-sm transition-all duration-200 active:scale-95 ${cartBump ? 'scale-105' : 'scale-100'}`}
+              style={{background:'linear-gradient(135deg,#5c2006,#c1440e,#1e5b8c)'}}
             >
               <div className="flex items-center gap-3">
-                <span className="animate-pulse-glow bg-emerald-500 text-white text-xs w-7 h-7 rounded-full font-extrabold flex items-center justify-center">
+                <span className="text-xs w-7 h-7 rounded-full font-extrabold flex items-center justify-center animate-pulse-glow" style={{background:'#e8a93a',color:'#2b2320'}}>
                   {totalItemCount}
                 </span>
-                <span>View Order</span>
+                <span>عرض الطلب — View Order</span>
               </div>
-              <span className="text-emerald-400 font-extrabold text-base">
+              <span className="font-extrabold text-base" style={{color:'#e8a93a'}}>
                 {subtotal.toFixed(2)} {restaurant.currency_symbol}
               </span>
             </button>

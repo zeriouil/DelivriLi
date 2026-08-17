@@ -2,46 +2,67 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Google Fonts ────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap');
+/* ── Google Fonts ───────────────────────────────────── */
+/* Lalezar  — Arabic-influenced display (headings)        */
+/* Tajawal  — clean bilingual Arabic/Latin (body)         */
+@import url('https://fonts.googleapis.com/css2?family=Lalezar&family=Tajawal:wght@300;400;500;700;800;900&display=swap');
+
 /* Leaflet Map Styles */
 @import "leaflet/dist/leaflet.css";
 
 /* ── Design Tokens ───────────────────────────────────── */
 :root {
-  /* Brand */
-  --brand-50:  #ecfdf5;
-  --brand-100: #d1fae5;
-  --brand-200: #a7f3d0;
-  --brand-400: #34d399;
-  --brand-500: #10b981;
-  --brand-600: #059669;
-  --brand-700: #047857;
-  --brand-800: #065f46;
+  /* ── Terracotta / Tagine Clay (primary) */
+  --brand-50:  #fdf2ee;
+  --brand-100: #fbe0d3;
+  --brand-200: #f5bda5;
+  --brand-400: #d96b3f;
+  --brand-500: #c1440e;
+  --brand-600: #a33a0c;
+  --brand-700: #842f09;
+  --brand-800: #5c2006;
 
-  /* Accent (amber) */
-  --accent-400: #fbbf24;
-  --accent-500: #f59e0b;
-  --accent-600: #d97706;
+  /* ── Zellige Blue / Chefchaouen Cobalt (secondary) */
+  --cobalt-50:  #eef4fb;
+  --cobalt-100: #d0e4f5;
+  --cobalt-300: #6da8d6;
+  --cobalt-500: #1e5b8c;
+  --cobalt-600: #184d77;
+  --cobalt-700: #123f62;
 
-  /* Admin indigo */
+  /* ── Saffron Yellow (CTA accent, stars) */
+  --saffron-300: #f5d06a;
+  --saffron-400: #e8a93a;
+  --saffron-500: #d4920f;
+  --saffron-600: #b57a0a;
+
+  /* ── Henna Green (success, open states) */
+  --henna-50:  #edf3ec;
+  --henna-100: #cfe2cd;
+  --henna-400: #6a9466;
+  --henna-500: #4a6741;
+  --henna-600: #3b5334;
+
+  /* ── Admin indigo (unchanged) */
   --admin-500: #6366f1;
   --admin-600: #4f46e5;
   --admin-700: #4338ca;
 
-  /* Neutrals */
-  --surface:   #ffffff;
-  --bg:        #f8fafc;
-  --border:    #e2e8f0;
-  --muted:     #94a3b8;
-  --text:      #0f172a;
-  --text-2:    #475569;
+  /* ── Sand / Warm Neutrals */
+  --surface:   #fdfaf5;
+  --bg:        #f5ede0;
+  --border:    #e4d5c1;
+  --muted:     #a89070;
+  --text:      #2b2320;
+  --text-2:    #6b4c38;
 
-  /* Effects */
-  --shadow-sm:   0 1px 3px 0 rgba(0,0,0,.06), 0 1px 2px -1px rgba(0,0,0,.06);
-  --shadow-md:   0 4px 16px -2px rgba(0,0,0,.10), 0 2px 6px -2px rgba(0,0,0,.08);
-  --shadow-lg:   0 20px 40px -8px rgba(0,0,0,.14), 0 8px 16px -4px rgba(0,0,0,.08);
-  --shadow-glow: 0 0 0 3px rgba(16,185,129,.25);
+  /* ── Effects */
+  --shadow-sm:   0 1px 3px 0 rgba(43,35,32,.08), 0 1px 2px -1px rgba(43,35,32,.06);
+  --shadow-md:   0 4px 16px -2px rgba(43,35,32,.13), 0 2px 6px -2px rgba(43,35,32,.08);
+  --shadow-lg:   0 20px 40px -8px rgba(43,35,32,.18), 0 8px 16px -4px rgba(43,35,32,.09);
+  --shadow-glow: 0 0 0 3px rgba(193,68,14,.25);
+  --shadow-cobalt: 0 0 0 3px rgba(30,91,140,.25);
+  --shadow-saffron: 0 0 0 3px rgba(232,169,58,.30);
 }
 
 /* ── Base ─────────────────────────────────────────────── */
@@ -53,8 +74,16 @@ html {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ── Moroccan Display Font (Lalezar) ────────────────── */
+h1, h2, h3, h4, h5, h6,
+.font-heading {
+  font-family: var(--font-heading, 'Lalezar'), 'Tajawal', system-ui, sans-serif;
+  font-weight: 400; /* Lalezar is display weight by default */
+  letter-spacing: 0.01em;
+}
+
 body {
-  font-family: 'Outfit', 'Inter', system-ui, sans-serif;
+  font-family: var(--font-body, 'Tajawal'), system-ui, sans-serif;
   color: var(--text);
   background: var(--bg);
   touch-action: pan-y pinch-zoom;
@@ -68,8 +97,8 @@ body {
 
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+::-webkit-scrollbar-thumb { background: #c9a882; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #a89070; }
 
 /* ── Keyframe Animations ─────────────────────────────── */
 @keyframes fade-in {
@@ -111,8 +140,12 @@ body {
   50%       { transform: scale(1.15); }
 }
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,.5); }
-  50%       { box-shadow: 0 0 0 8px rgba(16,185,129,0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(193,68,14,.5); }
+  50%       { box-shadow: 0 0 0 8px rgba(193,68,14,0); }
+}
+@keyframes lantern-sway {
+  0%, 100% { transform: rotate(-3deg); }
+  50%       { transform: rotate(3deg); }
 }
 @keyframes vehicle-bounce {
   0%, 100% { transform: translateY(0px); }
@@ -140,27 +173,122 @@ body {
 .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
 .animate-urgent     { animation: urgent-flash 1.2s ease-in-out infinite; }
 .animate-spin-slow  { animation: spin-slow 3s linear infinite; }
+.animate-lantern    { animation: lantern-sway 3s ease-in-out infinite; }
 
-/* ── Glassmorphism ───────────────────────────────────── */
+/* ── Glassmorphism (warm sand tones) ──────────────────── */
 .glass {
-  background: rgba(255,255,255,.65);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border: 1px solid rgba(255,255,255,.5);
+  background: rgba(253,250,245,.78);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid rgba(232,169,58,.15);
 }
 .glass-dark {
-  background: rgba(15,23,42,.7);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  background: rgba(43,35,32,.80);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
   border: 1px solid rgba(255,255,255,.08);
 }
 
-/* ── Shimmer Skeleton ────────────────────────────────── */
+/* ── Shimmer Skeleton (sand warm) ────────────────────── */
 .shimmer {
-  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background: linear-gradient(90deg, #f5ede0 25%, #e8d9c4 50%, #f5ede0 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
+
+/* ── Zellige Geometric Background (8-pt star cross-hatch) ── */
+.zellige-bg {
+  background-color: var(--bg);
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      rgba(193,68,14,.055) 0px,
+      rgba(193,68,14,.055) 1px,
+      transparent 1px,
+      transparent 10px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      rgba(30,91,140,.045) 0px,
+      rgba(30,91,140,.045) 1px,
+      transparent 1px,
+      transparent 10px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgba(232,169,58,.03) 0px,
+      rgba(232,169,58,.03) 1px,
+      transparent 1px,
+      transparent 10px
+    );
+}
+
+/* ── Moroccan Arch Clip (for image containers) ──────────── */
+/* Creates a Moroccan pointed-arch top shape on image wrappers */
+.arch-clip {
+  clip-path: polygon(
+    0% 100%,   0% 28%,
+    5% 14%,    15% 5%,
+    30% 1%,    50% 0%,
+    70% 1%,    85% 5%,
+    95% 14%,   100% 28%,
+    100% 100%
+  );
+}
+
+/* ── Moroccan Ornamental Borders ─────────────────────── */
+.moroccan-border-top {
+  border-top: 3px solid transparent;
+  border-image: repeating-linear-gradient(
+    90deg,
+    #c1440e 0px,  #c1440e 6px,
+    #e8a93a 6px,  #e8a93a 12px,
+    #1e5b8c 12px, #1e5b8c 18px,
+    #e8a93a 18px, #e8a93a 24px
+  ) 1;
+}
+.moroccan-border-bottom {
+  border-bottom: 3px solid transparent;
+  border-image: repeating-linear-gradient(
+    90deg,
+    #c1440e 0px,  #c1440e 6px,
+    #e8a93a 6px,  #e8a93a 12px,
+    #1e5b8c 12px, #1e5b8c 18px,
+    #e8a93a 18px, #e8a93a 24px
+  ) 1;
+}
+
+/* ── Button Utilities ─────────────────────────────────── */
+.btn-primary {
+  background: #c1440e;
+  color: #fff;
+  font-weight: 700;
+  border-radius: 0.75rem;
+  transition: background .18s, transform .15s;
+  box-shadow: 0 4px 14px rgba(193,68,14,.35);
+}
+.btn-primary:hover  { background: #a33a0c; }
+.btn-primary:active { transform: scale(.97); }
+
+.btn-saffron {
+  background: #e8a93a;
+  color: #2b2320;
+  font-weight: 700;
+  border-radius: 0.75rem;
+  transition: background .18s;
+  box-shadow: 0 4px 14px rgba(232,169,58,.30);
+}
+.btn-saffron:hover { background: #d4920f; }
+
+.btn-cobalt {
+  background: #1e5b8c;
+  color: #fff;
+  font-weight: 700;
+  border-radius: 0.75rem;
+  transition: background .18s;
+  box-shadow: 0 4px 14px rgba(30,91,140,.30);
+}
+.btn-cobalt:hover { background: #184d77; }
 
 /* ── Leaflet Marker Animations ───────────────────────── */
 .pulse-marker {
@@ -174,16 +302,16 @@ body {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: rgba(99, 102, 241, 0.4);
+  background: rgba(193,68,14,.35);
   animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
 }
 .pulse-marker .dot {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #6366f1;
+  background: #c1440e;
   border: 3px solid white;
-  box-shadow: 0 2px 8px rgba(99,102,241,0.6);
+  box-shadow: 0 2px 8px rgba(193,68,14,0.6);
   animation: pulse-dot 1.5s ease-in-out infinite;
   z-index: 1;
 }
@@ -201,9 +329,9 @@ body {
   box-shadow: var(--shadow-lg);
 }
 
-/* ── Gradient Text ───────────────────────────────────── */
+/* ── Gradient Text (Terracotta → Gold) ───────────────── */
 .gradient-text {
-  background: linear-gradient(135deg, var(--brand-500), var(--brand-700));
+  background: linear-gradient(135deg, var(--brand-500), var(--accent-400));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

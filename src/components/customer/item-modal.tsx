@@ -14,13 +14,13 @@ interface ItemModalProps {
 const ITEM_ICONS: Record<string, string> = {
   m1: '🌮', m2: '🍔', m3: '🧀', m4: '🍋', m5: '🍟', m6: '🍗',
 };
-const ITEM_GRADIENTS: Record<string, string> = {
-  m1: 'from-amber-400/30 to-orange-300/20',
-  m2: 'from-rose-400/30 to-red-300/20',
-  m3: 'from-yellow-300/30 to-amber-200/20',
-  m4: 'from-lime-400/30 to-green-300/20',
-  m5: 'from-orange-400/30 to-yellow-300/20',
-  m6: 'from-rose-300/30 to-orange-200/20',
+const ITEM_GRADIENTS: Record<string, [string, string]> = {
+  m1: ['#fdf2ee','#d0e4f5'],  // tagine: terracotta→cobalt
+  m2: ['#fdf2ee','#fbe0d3'],  // burger: warm terracotta
+  m3: ['#fdfaf5','#f5ede0'],  // cheese: cream
+  m4: ['#edf3ec','#fdfaf5'],  // lemon: henna green
+  m5: ['#fdf2ee','#f5ede0'],  // fries: warm
+  m6: ['#fdf2ee','#fbe0d3'],  // chicken: warm terracotta
 };
 const ITEM_META: Record<string, { kcal: string; time: string }> = {
   m1: { kcal: '820', time: '15 min' },
@@ -49,9 +49,10 @@ export function ItemModal({ item, currencySymbol = 'DH', onClose }: ItemModalPro
 
   if (!item) return null;
 
-  const gradient = ITEM_GRADIENTS[item.id] ?? 'from-emerald-400/30 to-teal-300/20';
+  const gradientColors = ITEM_GRADIENTS[item.id] ?? ['#fdf2ee','#f5ede0'];
   const icon = ITEM_ICONS[item.id] ?? '🍽️';
   const meta = ITEM_META[item.id];
+  const modalBg = `linear-gradient(135deg, ${gradientColors[0]}, ${gradientColors[1]})`;
 
   const handleToggleModifier = (
     groupName: string,
@@ -108,7 +109,7 @@ export function ItemModal({ item, currencySymbol = 'DH', onClose }: ItemModalPro
       <div className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl animate-slide-up">
 
         {/* ── Hero ──────────────────────────────────── */}
-        <div className={`relative h-52 sm:h-60 bg-gradient-to-br ${gradient} flex-shrink-0 overflow-hidden`}>
+        <div className="relative h-52 sm:h-60 flex-shrink-0 overflow-hidden" style={{background: modalBg}}>
           {item.image_url ? (
             <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
           ) : (
@@ -128,8 +129,8 @@ export function ItemModal({ item, currencySymbol = 'DH', onClose }: ItemModalPro
           </button>
           {/* Badge */}
           {item.badge && (
-            <span className="absolute top-3 left-3 text-xs font-bold bg-white/90 text-slate-900 rounded-full px-3 py-1 shadow">
-              ✦ {item.badge}
+            <span className="absolute top-3 left-3 text-xs font-bold rounded-full px-3 py-1 shadow" style={{background:'rgba(232,169,58,.92)',color:'#2b2320'}}>
+              ★ {item.badge}
             </span>
           )}
           {/* Meta chips bottom-left */}
@@ -149,14 +150,14 @@ export function ItemModal({ item, currencySymbol = 'DH', onClose }: ItemModalPro
         <div className="p-5 overflow-y-auto flex-1 space-y-5">
           {/* Title + price */}
           <div className="flex justify-between items-start gap-3">
-            <h2 className="text-xl font-black text-slate-900 leading-tight">{item.name}</h2>
+            <h2 className="text-xl font-black text-[#2b2320] leading-tight" style={{fontFamily:'var(--font-heading,Lalezar),sans-serif'}}>{item.name}</h2>
             <div className="text-right flex-shrink-0">
-              <span className="text-xl font-extrabold text-emerald-600">{Number(item.base_price).toFixed(2)}</span>
-              <span className="text-sm text-slate-400 ml-1">{currencySymbol}</span>
+              <span className="text-xl font-extrabold text-[#c1440e]">{Number(item.base_price).toFixed(2)}</span>
+              <span className="text-sm text-[#a89070] ml-1">{currencySymbol}</span>
             </div>
           </div>
           {item.description && (
-            <p className="text-slate-500 text-sm leading-relaxed -mt-2">{item.description}</p>
+            <p className="text-[#a89070] text-sm leading-relaxed -mt-2">{item.description}</p>
           )}
 
           {/* Validation error */}
@@ -175,13 +176,13 @@ export function ItemModal({ item, currencySymbol = 'DH', onClose }: ItemModalPro
               <div key={group.id} className="border-t border-slate-100 pt-5">
                 <div className="flex justify-between items-start mb-3">
                   <div>
-                    <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                      <ChefHat className="w-4 h-4 text-emerald-600" />
+                    <h3 className="font-bold text-[#2b2320] text-sm flex items-center gap-2">
+                      <ChefHat className="w-4 h-4 text-[#e8a93a]" />
                       {group.name}
                     </h3>
-                    <p className="text-slate-400 text-xs mt-0.5">
+                    <p className="text-[#a89070] text-xs mt-0.5">
                       {isRadio ? 'Choose 1 option' : `Select up to ${group.max_selection}`}
-                      {currentSelected.length > 0 && <span className="text-emerald-600 font-bold ml-1">· {currentSelected.length} selected</span>}
+                      {currentSelected.length > 0 && <span className="text-[#c1440e] font-bold ml-1">· {currentSelected.length} selected</span>}
                     </p>
                   </div>
                   <span className={`text-[10px] font-bold uppercase px-2.5 py-1 rounded-full ${
@@ -203,20 +204,21 @@ export function ItemModal({ item, currencySymbol = 'DH', onClose }: ItemModalPro
                         onClick={() => handleToggleModifier(group.name, group.min_selection, group.max_selection, mod.id, mod.name, Number(mod.price_delta), group.id)}
                         className={`w-full flex items-center justify-between p-3.5 rounded-xl border-2 text-left transition-all duration-150 ${
                           isChecked
-                            ? 'border-emerald-500 bg-emerald-50 shadow-sm shadow-emerald-200'
-                            : 'border-slate-200 hover:border-emerald-300 bg-white'
+                            ? 'border-[#c1440e] shadow-sm'
+                            : 'border-[#e4d5c1] hover:border-[#c1440e]/40'
                         }`}
-                      >
+                        style={isChecked ? {background:'#fdf2ee'} : {background:'#fdfaf5'}}>
                         <div className="flex items-center gap-3">
                           <div className={`w-5 h-5 ${isRadio ? 'rounded-full' : 'rounded-md'} border-2 flex items-center justify-center transition-all ${
-                            isChecked ? 'bg-emerald-600 border-emerald-600' : 'border-slate-300'
-                          }`}>
+                            isChecked ? 'border-[#c1440e]' : 'border-[#e4d5c1]'
+                          }`}
+                          style={isChecked ? {background:'#c1440e'} : {}}>
                             {isChecked && <Check className="w-3 h-3 text-white stroke-[3]" />}
                           </div>
-                          <span className="text-sm font-semibold text-slate-800">{mod.name}</span>
+                          <span className="text-sm font-semibold text-[#2b2320]">{mod.name}</span>
                         </div>
                         {Number(mod.price_delta) > 0 && (
-                          <span className="text-xs font-bold text-emerald-600 bg-emerald-50 rounded-full px-2 py-0.5">
+                          <span className="text-xs font-bold rounded-full px-2 py-0.5" style={{color:'#e8a93a',background:'#fdf2ee'}}>
                             +{Number(mod.price_delta).toFixed(2)} {currencySymbol}
                           </span>
                         )}
@@ -230,34 +232,35 @@ export function ItemModal({ item, currencySymbol = 'DH', onClose }: ItemModalPro
 
           {/* Special Instructions */}
           <div className="border-t border-slate-100 pt-5">
-            <label className="block text-sm font-bold text-slate-900 mb-2">Special Instructions</label>
+            <label className="block text-sm font-bold text-[#2b2320] mb-2">Special Instructions</label>
             <textarea
               id="special-instructions"
               rows={2}
               placeholder="e.g. Extra sauce, no onions, well done…"
               value={instructions}
               onChange={e => setInstructions(e.target.value)}
-              className="w-full px-4 py-3 text-sm border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none resize-none transition"
+              className="w-full px-4 py-3 text-sm border-2 border-[#e4d5c1] rounded-xl focus:ring-2 focus:border-[#e8a93a] focus:outline-none resize-none transition"
+              style={{background:'#fdfaf5'}}
             />
           </div>
         </div>
 
         {/* ── Sticky Footer ──────────────────────────── */}
-        <div className="p-4 bg-white border-t border-slate-100 flex items-center gap-3">
+        <div className="p-4 border-t border-[#e4d5c1] flex items-center gap-3" style={{background:'#fdfaf5'}}>
           {/* Qty control */}
-          <div className="flex items-center bg-slate-100 rounded-xl p-1 gap-1">
+          <div className="flex items-center rounded-xl p-1 gap-1 border border-[#e4d5c1]" style={{background:'#f5ede0'}}>
             <button
               id="qty-minus"
               onClick={() => setQuantity(Math.max(1, quantity - 1))}
-              className="w-9 h-9 flex items-center justify-center text-slate-600 hover:bg-white hover:shadow rounded-lg transition"
+              className="w-9 h-9 flex items-center justify-center text-[#2b2320] hover:bg-[#fdfaf5] hover:shadow rounded-lg transition"
             >
               <Minus className="w-4 h-4" />
             </button>
-            <span className="w-8 text-center text-sm font-black text-slate-900">{quantity}</span>
+            <span className="w-8 text-center text-sm font-black text-[#2b2320]">{quantity}</span>
             <button
               id="qty-plus"
               onClick={() => setQuantity(quantity + 1)}
-              className="w-9 h-9 flex items-center justify-center text-slate-600 hover:bg-white hover:shadow rounded-lg transition"
+              className="w-9 h-9 flex items-center justify-center text-[#2b2320] hover:bg-[#fdfaf5] hover:shadow rounded-lg transition"
             >
               <Plus className="w-4 h-4" />
             </button>
@@ -267,9 +270,9 @@ export function ItemModal({ item, currencySymbol = 'DH', onClose }: ItemModalPro
           <button
             id="add-to-cart-btn"
             onClick={handleAddToCart}
-            className="flex-1 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.97] text-white py-3.5 px-5 rounded-xl font-bold text-sm shadow-lg shadow-emerald-600/30 flex items-center justify-between transition"
+            className="flex-1 btn-primary active:scale-[0.97] py-3.5 px-5 rounded-xl text-sm flex items-center justify-between transition"
           >
-            <span>Add to Order</span>
+            <span>أضف للطلب — Add to Order</span>
             <span className="font-extrabold">{totalPrice.toFixed(2)} {currencySymbol}</span>
           </button>
         </div>

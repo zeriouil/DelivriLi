@@ -146,20 +146,20 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
       {/* Drawer */}
-      <div className="relative bg-white w-full max-w-md h-full flex flex-col shadow-2xl animate-slide-right">
+      <div className="relative w-full max-w-md h-full flex flex-col shadow-2xl animate-slide-right" style={{background:'#fdfaf5'}}>
 
         {/* ── Header ────────────────────────────────── */}
-        <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-slate-900 to-slate-800 text-white flex-shrink-0">
+        <div className="p-4 border-b border-[#e4d5c1] flex items-center justify-between flex-shrink-0" style={{background:'linear-gradient(135deg,#5c2006,#c1440e)'}}>
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-emerald-500 rounded-xl flex items-center justify-center">
-              <ShoppingBag className="w-5 h-5" />
+            <div className="w-9 h-9 bg-[#e8a93a] rounded-xl flex items-center justify-center shadow-md">
+              <ShoppingBag className="w-5 h-5 text-[#2b2320]" />
             </div>
             <div>
-              <h2 className="font-black text-base">Your Order</h2>
-              <p className="text-slate-400 text-xs">{items.length} item{items.length !== 1 ? 's' : ''} · {restaurant.name}</p>
+              <h2 className="font-black text-base text-white" style={{fontFamily:'var(--font-heading,Lalezar),sans-serif'}}>طلبك — Your Order</h2>
+              <p className="text-orange-200 text-xs">{items.length} item{items.length !== 1 ? 's' : ''} · {restaurant.name}</p>
             </div>
           </div>
-          <button id="close-cart" onClick={onClose} className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-white/10 transition">
+          <button id="close-cart" onClick={onClose} className="p-2 text-orange-200 hover:text-white rounded-xl hover:bg-white/10 transition">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -170,14 +170,14 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
           {/* Empty State */}
           {items.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center p-8 gap-4">
-              <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center text-5xl animate-float">
+              <div className="w-24 h-24 rounded-full flex items-center justify-center text-5xl animate-float" style={{background:'#f5ede0'}}>
                 🛒
               </div>
               <div>
-                <h3 className="font-bold text-slate-700 text-lg">Your cart is empty</h3>
-                <p className="text-slate-400 text-sm mt-1">Add some delicious items to get started</p>
+                <h3 className="font-bold text-[#2b2320] text-lg">سلتك فارغة</h3>
+                <p className="text-[#a89070] text-sm mt-1">Add some delicious Moroccan dishes to get started</p>
               </div>
-              <button onClick={onClose} className="mt-2 px-6 py-2.5 bg-emerald-600 text-white rounded-full text-sm font-bold hover:bg-emerald-700 transition">
+              <button onClick={onClose} className="mt-2 px-6 py-2.5 btn-primary text-sm">
                 Browse Menu
               </button>
             </div>
@@ -186,20 +186,20 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
 
               {/* Free delivery progress */}
               {customer.orderType === 'delivery' && subtotal < FREE_DELIVERY_THRESHOLD && (
-                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3.5">
-                  <p className="text-xs font-semibold text-amber-800 mb-2">
+                <div className="border border-[#e4d5c1] rounded-2xl p-3.5" style={{background:'#fdf2ee'}}>
+                  <p className="text-xs font-semibold text-[#842f09] mb-2">
                     Add <strong>{remaining.toFixed(0)} DH</strong> more for free delivery 🚀
                   </p>
-                  <div className="w-full h-2 bg-amber-200 rounded-full overflow-hidden">
+                  <div className="w-full h-2 rounded-full overflow-hidden" style={{background:'#f5bda5'}}>
                     <div
-                      className="h-full bg-amber-500 rounded-full progress-bar transition-all duration-500"
-                      style={{ width: `${progressPct}%`, '--prog-width': `${progressPct}%` } as React.CSSProperties}
+                      className="h-full rounded-full progress-bar transition-all duration-500"
+                      style={{ width: `${progressPct}%`, background:'#e8a93a', '--prog-width': `${progressPct}%` } as React.CSSProperties}
                     />
                   </div>
                 </div>
               )}
               {customer.orderType === 'delivery' && subtotal >= FREE_DELIVERY_THRESHOLD && (
-                <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3.5 flex items-center gap-2 text-emerald-700 text-xs font-bold">
+                <div className="border border-[#cfe2cd] rounded-2xl p-3.5 flex items-center gap-2 text-xs font-bold" style={{background:'#edf3ec',color:'#3b5334'}}>
                   <span className="text-base">🎉</span> You qualify for free delivery!
                 </div>
               )}
@@ -207,34 +207,34 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
               {/* Cart Items */}
               <div className="space-y-2">
                 {items.map(item => (
-                  <div key={item.cartItemId} className="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 animate-slide-up">
+                  <div key={item.cartItemId} className="p-3.5 rounded-2xl border border-[#e4d5c1] animate-slide-up" style={{background:'#f5ede0'}}>
                     <div className="flex justify-between items-start gap-2">
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-bold text-slate-900 text-sm truncate">{item.menuItem.name}</h4>
+                        <h4 className="font-bold text-[#2b2320] text-sm truncate">{item.menuItem.name}</h4>
                         {item.selectedModifiers.length > 0 && (
-                          <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">
+                          <p className="text-xs text-[#a89070] mt-0.5 line-clamp-1">
                             {item.selectedModifiers.map(m => m.modifierName).join(', ')}
                           </p>
                         )}
                         {item.instructions && (
-                          <p className="text-xs text-amber-600 mt-0.5 italic">&ldquo;{item.instructions}&rdquo;</p>
+                          <p className="text-xs text-[#c1440e] mt-0.5 italic">&ldquo;{item.instructions}&rdquo;</p>
                         )}
                       </div>
-                      <span className="font-extrabold text-sm text-emerald-600 flex-shrink-0">
+                      <span className="font-extrabold text-sm text-[#e8a93a] flex-shrink-0">
                         {item.totalPrice.toFixed(2)} {restaurant.currency_symbol}
                       </span>
                     </div>
 
                     <div className="flex justify-between items-center pt-2.5">
-                      <button onClick={() => removeItem(item.cartItemId)} className="flex items-center gap-1 text-xs text-slate-400 hover:text-rose-500 transition font-medium">
+                      <button onClick={() => removeItem(item.cartItemId)} className="flex items-center gap-1 text-xs text-[#a89070] hover:text-rose-500 transition font-medium">
                         <Trash2 className="w-3.5 h-3.5" /> Remove
                       </button>
-                      <div className="flex items-center bg-white border border-slate-200 rounded-xl p-0.5 gap-1">
-                        <button onClick={() => updateQuantity(item.cartItemId, -1)} className="w-7 h-7 flex items-center justify-center text-slate-600 hover:bg-slate-100 rounded-lg transition">
+                      <div className="flex items-center rounded-xl p-0.5 gap-1 border border-[#e4d5c1]" style={{background:'#fdfaf5'}}>
+                        <button onClick={() => updateQuantity(item.cartItemId, -1)} className="w-7 h-7 flex items-center justify-center text-[#2b2320] hover:bg-[#f5ede0] rounded-lg transition">
                           <Minus className="w-3 h-3" />
                         </button>
-                        <span className="w-7 text-center text-xs font-black text-slate-900">{item.quantity}</span>
-                        <button onClick={() => updateQuantity(item.cartItemId, 1)} className="w-7 h-7 flex items-center justify-center text-slate-600 hover:bg-slate-100 rounded-lg transition">
+                        <span className="w-7 text-center text-xs font-black text-[#2b2320]">{item.quantity}</span>
+                        <button onClick={() => updateQuantity(item.cartItemId, 1)} className="w-7 h-7 flex items-center justify-center text-[#2b2320] hover:bg-[#f5ede0] rounded-lg transition">
                           <Plus className="w-3 h-3" />
                         </button>
                       </div>
@@ -244,12 +244,12 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
               </div>
 
               {/* Promo Code */}
-              <div className="border border-slate-200 rounded-2xl p-3.5">
-                <p className="text-xs font-bold text-slate-700 mb-2 flex items-center gap-1.5"><Tag className="w-3.5 h-3.5 text-emerald-600" /> Promo Code</p>
+              <div className="border border-[#e4d5c1] rounded-2xl p-3.5">
+                <p className="text-xs font-bold text-[#2b2320] mb-2 flex items-center gap-1.5"><Tag className="w-3.5 h-3.5 text-[#1e5b8c]" /> Promo Code</p>
                 {appliedPromo ? (
-                  <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
-                    <span className="text-xs font-bold text-emerald-700">✓ {appliedPromo.code} applied — {appliedPromo.discount} DH off</span>
-                    <button onClick={() => setAppliedPromo(null)} className="text-slate-400 hover:text-slate-600"><X className="w-3.5 h-3.5" /></button>
+                  <div className="flex items-center justify-between rounded-xl px-3 py-2 border border-[#cfe2cd]" style={{background:'#edf3ec'}}>
+                    <span className="text-xs font-bold text-[#3b5334]">✓ {appliedPromo.code} applied — {appliedPromo.discount} DH off</span>
+                    <button onClick={() => setAppliedPromo(null)} className="text-[#a89070] hover:text-[#2b2320]"><X className="w-3.5 h-3.5" /></button>
                   </div>
                 ) : (
                   <div className="flex gap-2">
@@ -259,12 +259,12 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
                       placeholder="Enter code (try WELCOME10)"
                       value={promoCode}
                       onChange={e => { setPromoCode(e.target.value); setPromoError(''); }}
-                      className="flex-1 px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                      className="flex-1 px-3 py-2 text-xs border border-[#e4d5c1] rounded-xl focus:ring-2 focus:border-[#e8a93a] focus:outline-none" style={{background:'#fdfaf5'}}
                     />
                     <button
                       id="apply-promo"
                       onClick={handleApplyPromo}
-                      className="px-3 py-2 bg-slate-900 text-white text-xs font-bold rounded-xl hover:bg-slate-800 transition"
+                      className="px-3 py-2 btn-cobalt text-xs"
                     >
                       Apply
                     </button>
@@ -274,8 +274,8 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
               </div>
 
               {/* Checkout Form */}
-              <form id="checkout-form" onSubmit={handlePlaceOrder} className="space-y-4 pt-2 border-t border-slate-100">
-                <h3 className="font-black text-slate-900 text-sm">Order Details</h3>
+              <form id="checkout-form" onSubmit={handlePlaceOrder} className="space-y-4 pt-2 border-t border-[#e4d5c1]">
+                <h3 className="font-black text-[#2b2320] text-sm">تفاصيل الطلب — Order Details</h3>
 
                 {/* Order Type */}
                 <div className="grid grid-cols-3 gap-2">
@@ -287,13 +287,14 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
                       onClick={() => setCustomer({ ...customer, orderType: type.id })}
                       className={`py-3 px-2 rounded-xl text-xs font-bold flex flex-col items-center gap-1.5 border-2 transition-all ${
                         customer.orderType === type.id
-                          ? 'border-emerald-600 bg-emerald-50 text-emerald-700 shadow-sm'
-                          : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                          ? 'border-[#c1440e] text-[#c1440e]'
+                          : 'border-[#e4d5c1] text-[#a89070] hover:border-[#c1440e]/40'
                       }`}
+                      style={customer.orderType === type.id ? {background:'#fdf2ee'} : {background:'#fdfaf5'}}
                     >
                       <type.icon className="w-5 h-5" />
                       <span>{type.label}</span>
-                      <span className={`text-[9px] ${customer.orderType === type.id ? 'text-emerald-500' : 'text-slate-400'}`}>{type.desc}</span>
+                      <span className={`text-[9px] ${customer.orderType === type.id ? 'text-[#c1440e]' : 'text-[#a89070]'}`}>{type.desc}</span>
                     </button>
                   ))}
                 </div>
@@ -301,7 +302,7 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
                 {/* Input fields */}
                 <div className="space-y-3">
                   <div className="relative">
-                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#a89070]" />
                     <input
                       id="customer-name"
                       type="text"
@@ -309,11 +310,12 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
                       required
                       value={customer.name}
                       onChange={e => setCustomer({ ...customer, name: e.target.value })}
-                      className="w-full pl-10 pr-3 py-3 text-sm border-2 border-slate-200 rounded-xl focus:ring-0 focus:border-emerald-500 outline-none transition"
+                      className="w-full pl-10 pr-3 py-3 text-sm border-2 border-[#e4d5c1] rounded-xl focus:ring-0 focus:border-[#c1440e] outline-none transition"
+                      style={{background:'#fdfaf5'}}
                     />
                   </div>
                   <div className="relative">
-                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#a89070]" />
                     <input
                       id="customer-phone"
                       type="tel"
@@ -321,13 +323,14 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
                       required
                       value={customer.phone}
                       onChange={e => setCustomer({ ...customer, phone: e.target.value })}
-                      className="w-full pl-10 pr-3 py-3 text-sm border-2 border-slate-200 rounded-xl focus:ring-0 focus:border-emerald-500 outline-none transition"
+                      className="w-full pl-10 pr-3 py-3 text-sm border-2 border-[#e4d5c1] rounded-xl focus:ring-0 focus:border-[#c1440e] outline-none transition"
+                      style={{background:'#fdfaf5'}}
                     />
                   </div>
 
                   {customer.orderType === 'delivery' && (
                     <div className="relative">
-                      <MapPin className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
+                      <MapPin className="absolute left-3.5 top-3.5 w-4 h-4 text-[#a89070]" />
                       <textarea
                         id="delivery-address"
                         rows={2}
@@ -335,14 +338,15 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
                         required
                         value={customer.deliveryAddress}
                         onChange={e => setCustomer({ ...customer, deliveryAddress: e.target.value })}
-                        className="w-full pl-10 pr-3 py-3 text-sm border-2 border-slate-200 rounded-xl focus:ring-0 focus:border-emerald-500 outline-none transition resize-none"
+                        className="w-full pl-10 pr-3 py-3 text-sm border-2 border-[#e4d5c1] rounded-xl focus:ring-0 focus:border-[#c1440e] outline-none transition resize-none"
+                        style={{background:'#fdfaf5'}}
                       />
                     </div>
                   )}
 
                   {customer.orderType === 'dine_in' && (
                     <div className="relative">
-                      <Store className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <Store className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#a89070]" />
                       <input
                         id="table-number"
                         type="text"
@@ -350,20 +354,22 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
                         required
                         value={customer.tableNumber}
                         onChange={e => setCustomer({ ...customer, tableNumber: e.target.value })}
-                        className="w-full pl-10 pr-3 py-3 text-sm border-2 border-slate-200 rounded-xl focus:ring-0 focus:border-emerald-500 outline-none transition"
+                        className="w-full pl-10 pr-3 py-3 text-sm border-2 border-[#e4d5c1] rounded-xl focus:ring-0 focus:border-[#c1440e] outline-none transition"
+                        style={{background:'#fdfaf5'}}
                       />
                     </div>
                   )}
 
                   <div className="relative">
-                    <FileText className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
+                    <FileText className="absolute left-3.5 top-3.5 w-4 h-4 text-[#a89070]" />
                     <textarea
                       id="order-notes"
                       rows={2}
                       placeholder="Order notes (optional)"
                       value={customer.notes}
                       onChange={e => setCustomer({ ...customer, notes: e.target.value })}
-                      className="w-full pl-10 pr-3 py-3 text-sm border-2 border-slate-200 rounded-xl focus:ring-0 focus:border-emerald-500 outline-none transition resize-none"
+                      className="w-full pl-10 pr-3 py-3 text-sm border-2 border-[#e4d5c1] rounded-xl focus:ring-0 focus:border-[#c1440e] outline-none transition resize-none"
+                      style={{background:'#fdfaf5'}}
                     />
                   </div>
                 </div>
@@ -374,28 +380,28 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
 
         {/* ── Footer ────────────────────────────────── */}
         {items.length > 0 && (
-          <div className="p-4 bg-white border-t border-slate-100 space-y-3 flex-shrink-0">
+          <div className="p-4 border-t border-[#e4d5c1] space-y-3 flex-shrink-0" style={{background:'#fdfaf5'}}>
             {/* Totals */}
             <div className="space-y-1.5 text-sm">
-              <div className="flex justify-between text-slate-500">
+              <div className="flex justify-between text-[#a89070]">
                 <span>Subtotal</span>
                 <span>{subtotal.toFixed(2)} {restaurant.currency_symbol}</span>
               </div>
               {customer.orderType === 'delivery' && (
-                <div className="flex justify-between text-slate-500">
+                <div className="flex justify-between text-[#a89070]">
                   <span>Delivery Fee</span>
-                  <span>{subtotal >= FREE_DELIVERY_THRESHOLD ? <span className="text-emerald-600 font-bold">FREE</span> : `${deliveryFee.toFixed(2)} ${restaurant.currency_symbol}`}</span>
+                  <span>{subtotal >= FREE_DELIVERY_THRESHOLD ? <span className="text-[#4a6741] font-bold">FREE</span> : `${deliveryFee.toFixed(2)} ${restaurant.currency_symbol}`}</span>
                 </div>
               )}
               {appliedPromo && appliedPromo.discount > 0 && (
-                <div className="flex justify-between text-emerald-600 font-semibold">
+                <div className="flex justify-between font-semibold" style={{color:'#4a6741'}}>
                   <span>Promo ({appliedPromo.code})</span>
                   <span>-{appliedPromo.discount.toFixed(2)} {restaurant.currency_symbol}</span>
                 </div>
               )}
-              <div className="flex justify-between font-black text-base text-slate-900 pt-2 border-t border-slate-100">
+              <div className="flex justify-between font-black text-base text-[#2b2320] pt-2 border-t border-[#e4d5c1]">
                 <span>Total</span>
-                <span className="text-emerald-600">{grandTotal.toFixed(2)} {restaurant.currency_symbol}</span>
+                <span style={{color:'#c1440e'}}>{grandTotal.toFixed(2)} {restaurant.currency_symbol}</span>
               </div>
             </div>
 
@@ -405,13 +411,13 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
               type="submit"
               form="checkout-form"
               disabled={submitting}
-              className="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white py-4 px-5 rounded-2xl font-black text-sm shadow-lg shadow-emerald-600/30 flex items-center justify-between transition disabled:opacity-60"
+              className="w-full btn-primary active:scale-[0.98] py-4 px-5 rounded-2xl text-sm flex items-center justify-between transition disabled:opacity-60"
             >
               {submitting ? (
                 <><Loader2 className="w-4 h-4 animate-spin" /><span className="mx-auto">Placing Order…</span></>
               ) : (
                 <>
-                  <span>Place Order via WhatsApp</span>
+                  <span>🇲🇦 Place Order via WhatsApp</span>
                   <ChevronRight className="w-5 h-5" />
                 </>
               )}

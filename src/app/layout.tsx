@@ -1,12 +1,24 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import { Lalezar, Tajawal } from 'next/font/google';
 import './globals.css';
 import { CartProvider } from '@/context/cart-context';
 
-const inter = Inter({ subsets: ['latin'] });
+const lalezar = Lalezar({
+  subsets: ['arabic', 'latin'],
+  weight: ['400'],
+  variable: '--font-heading',
+  display: 'swap',
+});
+
+const tajawal = Tajawal({
+  subsets: ['arabic', 'latin'],
+  weight: ['300', '400', '500', '700', '800', '900'],
+  variable: '--font-body',
+  display: 'swap',
+});
 
 export const viewport: Viewport = {
-  themeColor: '#059669',
+  themeColor: '#c1440e',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -30,8 +42,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="antialiased scroll-smooth">
-      <body className={`${inter.className} min-h-[100dvh] bg-slate-50 text-slate-900 selection:bg-emerald-200 selection:text-emerald-900`}>
+    <html lang="ar" dir="ltr" className={`antialiased scroll-smooth ${lalezar.variable} ${tajawal.variable}`}>
+      <body className={`${tajawal.className} min-h-[100dvh] text-[#2b2320] selection:bg-amber-200 selection:text-amber-900`} style={{background:'#f5ede0'}}>
         <CartProvider>
           {children}
         </CartProvider>
