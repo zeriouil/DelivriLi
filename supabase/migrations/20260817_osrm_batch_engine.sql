@@ -12,12 +12,12 @@ CREATE EXTENSION IF NOT EXISTS postgis_topology; -- optional: topology support
 -- ── 1. Geospatial Columns on Existing Tables ──────────────────────────────────
 -- Add a geography point to restaurants so PostGIS can calculate distances.
 ALTER TABLE public.restaurants
-  ADD COLUMN IF NOT EXISTS location extensions.geography(POINT, 4326);
+  ADD COLUMN IF NOT EXISTS location geography(POINT, 4326);
 
 -- Add geography point to orders for customer drop-off coordinates.
 ALTER TABLE public.orders
-  ADD COLUMN IF NOT EXISTS pickup_location  extensions.geography(POINT, 4326),
-  ADD COLUMN IF NOT EXISTS dropoff_location extensions.geography(POINT, 4326);
+  ADD COLUMN IF NOT EXISTS pickup_location  geography(POINT, 4326),
+  ADD COLUMN IF NOT EXISTS dropoff_location geography(POINT, 4326);
 
 -- ── 2. Couriers Table ─────────────────────────────────────────────────────────
 -- Represents a delivery courier (linked to Supabase Auth user).
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS public.couriers (
   phone_number    TEXT NOT NULL,
   is_active       BOOLEAN DEFAULT TRUE,
   is_available    BOOLEAN DEFAULT TRUE,            -- toggles availability for dispatch
-  current_location extensions.geography(POINT, 4326), -- updated by PWA every ~15 s
+  current_location geography(POINT, 4326), -- updated by PWA every ~15 s
   last_seen_at    TIMESTAMPTZ DEFAULT NOW(),
   created_at      TIMESTAMPTZ DEFAULT NOW(),
   updated_at      TIMESTAMPTZ DEFAULT NOW()
@@ -91,7 +91,7 @@ CREATE TABLE IF NOT EXISTS public.batch_stops (
   order_id        UUID NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
 
   -- Spatial: POINT in WGS-84 geographic coordinates
-  location        extensions.geography(POINT, 4326) NOT NULL,
+  location        geography(POINT, 4326) NOT NULL,
 
   stop_sequence   INTEGER NOT NULL,   -- 1-based: 1 = first stop (Pickup A), 2 = second...
   stop_type       public.stop_type    NOT NULL,
@@ -168,7 +168,7 @@ AS $$
 BEGIN
   UPDATE public.couriers
   SET
-    current_location = ST_SetSRID(ST_MakePoint(p_lng, p_lat), 4326)::extensions.geography,
+    current_location = ST_SetSRID(ST_MakePoint(p_lng, p_lat), 4326)::geography,
     last_seen_at     = NOW(),
     updated_at       = NOW()
   WHERE id = p_courier_id;
@@ -205,7 +205,7 @@ AS $$
     ST_Y(o.dropoff_location::geometry)                          AS dropoff_lat,
     ST_Distance(
       o.pickup_location,
-      ST_SetSRID(ST_MakePoint(p_lng, p_lat), 4326)::extensions.geography
+      ST_SetSRID(ST_MakePoint(p_lng, p_lat), 4326)::geography
     )                                                           AS distance_m
   FROM public.orders o
   WHERE
@@ -222,7 +222,7 @@ AS $$
     )
     AND ST_DWithin(
       o.pickup_location,
-      ST_SetSRID(ST_MakePoint(p_lng, p_lat), 4326)::extensions.geography,
+      ST_SetSRID(ST_MakePoint(p_lng, p_lat), 4326)::geography,
       p_radius_m
     )
   ORDER BY distance_m ASC;
