@@ -13,7 +13,6 @@ interface NewJobAlertProps {
   courierPosition?: [number, number] | null;
 }
 
-// Haversine formula — returns distance in km between two lat/lng points
 function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -27,7 +26,6 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): nu
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-// Geocode an address string → lat/lng via free Nominatim API
 async function geocodeAddress(address: string): Promise<{ lat: number; lng: number } | null> {
   try {
     const res = await fetch(
@@ -37,9 +35,7 @@ async function geocodeAddress(address: string): Promise<{ lat: number; lng: numb
     if (data && data.length > 0) {
       return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
     }
-  } catch {
-    // silently fail
-  }
+  } catch {}
   return null;
 }
 
@@ -58,17 +54,14 @@ export function NewJobAlert({
 
   const stopMelodyRef = useRef<(() => void) | null>(null);
 
-  // Slide-in animation + start continuous melody on mount
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true));
-    // Start looping melody; store stop fn for cleanup
     stopMelodyRef.current = startOrderMelody();
     return () => {
       stopMelodyRef.current?.();
     };
   }, []);
 
-  // Calculate distance using the already-known courier position prop
   useEffect(() => {
     if (!order.delivery_address) {
       setDistanceLoading(false);
@@ -76,9 +69,7 @@ export function NewJobAlert({
     }
 
     const calculate = async () => {
-      // Geocode the delivery address
       const destCoords = await geocodeAddress(order.delivery_address!);
-
       if (courierPosition && destCoords) {
         const km = haversineKm(
           courierPosition[0],
@@ -94,7 +85,6 @@ export function NewJobAlert({
     calculate();
   }, [order.delivery_address, courierPosition]);
 
-  // Countdown timer
   useEffect(() => {
     intervalRef.current = setInterval(() => {
       setSecondsLeft((s) => {
@@ -112,9 +102,8 @@ export function NewJobAlert({
   const progress = (secondsLeft / timeoutSeconds) * 100;
   const circumference = 2 * Math.PI * 42;
   const strokeDashoffset = circumference * (1 - progress / 100);
-  const ringColor = progress > 60 ? "#22c55e" : progress > 30 ? "#f59e0b" : "#ef4444";
+  const ringColor = progress > 60 ? "#16a34a" : progress > 30 ? "#eab308" : "#dc2626";
 
-  // Format distance label
   const distanceLabel = distanceLoading
     ? "Calculating..."
     : distanceKm !== null
@@ -125,31 +114,26 @@ export function NewJobAlert({
 
   return (
     <>
-      {/* Backdrop */}
       <div
-        className={`fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${
+        className={`fixed inset-0 z-[100] bg-red-950/60 backdrop-blur-sm transition-opacity duration-300 flex justify-center ${
           visible ? "opacity-100" : "opacity-0"
         }`}
       />
 
-      {/* Alert Sheet */}
       <div
-        className={`fixed inset-x-0 bottom-0 z-50 transition-transform duration-500 ease-out ${
+        className={`fixed inset-x-0 bottom-0 z-[100] transition-transform duration-500 ease-out flex justify-center ${
           visible ? "translate-y-0" : "translate-y-full"
         }`}
       >
-        <div className="bg-slate-900 rounded-t-3xl shadow-2xl overflow-hidden">
-          {/* Pill handle */}
-          <div className="flex justify-center pt-3 pb-1">
-            <div className="w-10 h-1 bg-white/20 rounded-full" />
+        <div className="bg-white rounded-t-[40px] shadow-[0_-20px_60px_rgba(69,10,10,0.3)] overflow-hidden w-full max-w-lg font-body border-t border-red-100">
+          <div className="flex justify-center pt-4 pb-2">
+            <div className="w-12 h-1.5 bg-red-100 rounded-full" />
           </div>
 
-          {/* Header row: countdown ring + order info */}
-          <div className="px-6 pt-4 pb-6 flex items-center gap-4">
-            {/* SVG countdown ring */}
+          <div className="px-6 pt-4 pb-6 flex items-center gap-5">
             <div className="relative flex-shrink-0 w-24 h-24">
               <svg className="w-24 h-24 -rotate-90" viewBox="0 0 96 96">
-                <circle cx="48" cy="48" r="42" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="6" />
+                <circle cx="48" cy="48" r="42" fill="none" stroke="#fee2e2" strokeWidth="6" />
                 <circle
                   cx="48"
                   cy="48"
@@ -164,92 +148,88 @@ export function NewJobAlert({
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-white font-black text-2xl leading-none">{secondsLeft}</span>
-                <span className="text-white/50 text-[10px] font-medium uppercase tracking-wider">secs</span>
+                <span className="text-red-950 font-black text-3xl font-heading leading-none">{secondsLeft}</span>
+                <span className="text-red-900/40 text-[10px] font-black uppercase tracking-widest mt-0.5">secs</span>
               </div>
             </div>
 
             <div className="flex-1 min-w-0">
-              <div className="inline-flex items-center gap-1.5 bg-indigo-500/20 text-indigo-300 rounded-full px-3 py-1 text-xs font-bold mb-2">
-                <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-pulse" />
+              <div className="inline-flex items-center gap-2 bg-yellow-400 text-red-950 rounded-full px-3 py-1.5 text-xs font-black mb-2 shadow-sm">
+                <span className="w-2 h-2 bg-red-600 rounded-full animate-pulse" />
                 New Delivery Job
               </div>
-              <h2 className="text-white text-xl font-black leading-tight">
+              <h2 className="text-red-950 text-2xl font-black font-heading leading-tight mb-1">
                 Order #{order.order_number}
               </h2>
-              <p className="text-slate-400 text-sm font-semibold mt-0.5">
+              <p className="text-red-600 text-lg font-black font-heading">
                 {order.total_amount.toFixed(2)} DH
               </p>
             </div>
           </div>
 
-          {/* Distance pill — prominent highlight below header */}
           <div className="mx-6 mb-5">
-            <div className="bg-indigo-600/30 border border-indigo-500/40 rounded-2xl px-5 py-3 flex items-center gap-3">
-              <div className="w-9 h-9 bg-indigo-500/30 rounded-xl flex items-center justify-center flex-shrink-0">
-                <Navigation className="w-4 h-4 text-indigo-300" />
+            <div className="bg-red-50 border border-red-100 rounded-2xl px-5 py-4 flex items-center gap-4 shadow-inner">
+              <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Navigation className="w-5 h-5 text-red-600" />
               </div>
               <div>
-                <p className="text-indigo-300 text-[10px] font-bold uppercase tracking-wider">
+                <p className="text-red-900/60 text-[10px] font-black uppercase tracking-widest mb-0.5">
                   Distance to customer
                 </p>
-                <p className={`text-white font-black text-lg leading-tight ${distanceLoading ? "animate-pulse" : ""}`}>
+                <p className={`text-red-950 font-black text-xl font-heading leading-tight ${distanceLoading ? "animate-pulse" : ""}`}>
                   {distanceLabel}
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Divider */}
-          <div className="mx-6 h-px bg-white/10 mb-5" />
+          <div className="mx-6 h-px bg-red-100 mb-5" />
 
-          {/* Order Details */}
-          <div className="px-6 space-y-3 mb-6">
-            <div className="flex items-start gap-3 bg-white/5 rounded-2xl p-4">
-              <MapPin className="w-5 h-5 text-indigo-400 flex-shrink-0 mt-0.5" />
+          <div className="px-6 space-y-3 mb-8">
+            <div className="flex items-start gap-4 bg-white border border-red-50 rounded-2xl p-4 shadow-sm">
+              <MapPin className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-white/50 text-xs font-semibold uppercase tracking-wider mb-0.5">Deliver to</p>
-                <p className="text-white font-semibold leading-snug">
+                <p className="text-red-900/40 text-[10px] font-black uppercase tracking-widest mb-1">Deliver to</p>
+                <p className="text-red-950 font-bold leading-snug">
                   {order.delivery_address || "No address provided"}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 bg-white/5 rounded-2xl p-4">
-              <Phone className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+            <div className="flex items-center gap-4 bg-white border border-red-50 rounded-2xl p-4 shadow-sm">
+              <Phone className="w-5 h-5 text-green-600 flex-shrink-0" />
               <div>
-                <p className="text-white/50 text-xs font-semibold uppercase tracking-wider mb-0.5">Customer</p>
-                <p className="text-white font-semibold">
+                <p className="text-red-900/40 text-[10px] font-black uppercase tracking-widest mb-1">Customer</p>
+                <p className="text-red-950 font-bold">
                   {order.customer_name} • {order.customer_phone}
                 </p>
               </div>
             </div>
 
             {order.notes && (
-              <div className="flex items-start gap-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4">
-                <Package className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+              <div className="flex items-start gap-4 bg-yellow-50 border border-yellow-200 rounded-2xl p-4 shadow-sm">
+                <Package className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-amber-400 text-xs font-semibold uppercase tracking-wider mb-0.5">Instructions</p>
-                  <p className="text-white/80 font-medium">{order.notes}</p>
+                  <p className="text-yellow-600 text-[10px] font-black uppercase tracking-widest mb-1">Instructions</p>
+                  <p className="text-yellow-900 font-bold">{order.notes}</p>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Action Buttons */}
-          <div className="px-6 pb-10 flex gap-4">
+          <div className="px-6 pb-8 flex gap-4">
             <button
               onClick={() => onDecline(order.id)}
-              className="flex-none w-16 h-16 flex items-center justify-center rounded-2xl bg-white/10 hover:bg-white/20 transition-colors active:scale-95"
+              className="flex-none w-16 h-16 flex items-center justify-center rounded-2xl bg-red-50 hover:bg-red-100 transition-colors active:scale-95 border border-red-100"
             >
-              <X className="w-7 h-7 text-white/70" />
+              <X className="w-7 h-7 text-red-900/40" />
             </button>
             <button
               onClick={() => onAccept(order)}
-              className="flex-1 h-16 flex items-center justify-center gap-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 transition-colors active:scale-[0.98] shadow-lg shadow-emerald-500/30"
+              className="flex-1 h-16 flex items-center justify-center gap-3 rounded-2xl bg-green-600 hover:bg-green-700 transition-colors active:scale-[0.98] shadow-lg shadow-green-600/30"
             >
-              <Check className="w-6 h-6 text-white" />
-              <span className="text-white font-black text-lg">Accept Delivery</span>
+              <Check className="w-7 h-7 text-white" />
+              <span className="text-white font-black text-xl font-heading">Accept Delivery</span>
             </button>
           </div>
         </div>

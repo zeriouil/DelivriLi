@@ -7,7 +7,7 @@ import { Phone, MapPin, Navigation, CheckCircle2, PackageCheck, MapPinCheck, Sto
 
 const AnimatedMap = dynamic(
   () => import("./AnimatedMap").then((mod) => mod.AnimatedMap),
-  { ssr: false, loading: () => <div className="w-full h-48 bg-slate-800 rounded-2xl animate-pulse" /> }
+  { ssr: false, loading: () => <div className="w-full h-48 bg-red-100 rounded-2xl animate-pulse" /> }
 );
 
 const DELIVERY_GEOFENCE_METRES = 250;
@@ -18,7 +18,6 @@ interface DeliveryJobCardProps {
   onUpdateStatus: (orderId: string, newStatus: OrderStatus) => void;
 }
 
-// Haversine formula — returns distance in metres
 function haversineMetres(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371000;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -31,7 +30,6 @@ function haversineMetres(lat1: number, lon1: number, lat2: number, lon2: number)
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-// Geocode address string → lat/lng via Nominatim
 async function geocodeAddress(address: string): Promise<{ lat: number; lng: number } | null> {
   try {
     const res = await fetch(
@@ -51,12 +49,10 @@ function formatDistance(m: number): string {
 export function DeliveryJobCard({ order, courierPosition, onUpdateStatus }: DeliveryJobCardProps) {
   const currentStatus = order.status;
 
-  // ── Geofence state ────────────────────────────────────
   const [distanceM, setDistanceM] = useState<number | null>(null);
   const [distanceLoading, setDistanceLoading] = useState(false);
   const [destCoords, setDestCoords] = useState<{ lat: number; lng: number } | null>(null);
 
-  // Geocode delivery address once
   useEffect(() => {
     if (!order.delivery_address) return;
     setDistanceLoading(true);
@@ -66,7 +62,6 @@ export function DeliveryJobCard({ order, courierPosition, onUpdateStatus }: Deli
     });
   }, [order.delivery_address]);
 
-  // Recalculate distance whenever courier moves or address geocodes
   useEffect(() => {
     if (!courierPosition || !destCoords) {
       setDistanceM(null);
@@ -80,183 +75,171 @@ export function DeliveryJobCard({ order, courierPosition, onUpdateStatus }: Deli
   }, [courierPosition, destCoords]);
 
   const isNearCustomer = distanceM !== null && distanceM <= DELIVERY_GEOFENCE_METRES;
-  const canDeliver = isNearCustomer || distanceM === null; // allow if we can't calculate (graceful fallback)
+  const canDeliver = isNearCustomer || distanceM === null;
 
-  // ── Status badge ──────────────────────────────────────
   const getStatusBadge = () => {
     switch (currentStatus) {
-      case 'ready':           return { label: 'Ready for Pickup',    color: 'bg-amber-100 text-amber-800 border-amber-300' };
+      case 'ready':           return { label: 'Ready for Pickup',    color: 'bg-green-100 text-green-800 border-green-300' };
       case 'picked_up':
-      case 'out_for_delivery': return { label: 'On the Way 🛵',      color: 'bg-blue-100 text-blue-800 border-blue-300' };
-      case 'arrived':         return { label: 'Arrived 📍',           color: 'bg-purple-100 text-purple-800 border-purple-300' };
-      default:                return { label: 'Active',               color: 'bg-emerald-100 text-emerald-800 border-emerald-300' };
+      case 'out_for_delivery': return { label: 'On the Way 🛵',      color: 'bg-yellow-100 text-yellow-800 border-yellow-300' };
+      case 'arrived':         return { label: 'Arrived 📍',           color: 'bg-blue-100 text-blue-800 border-blue-300' };
+      default:                return { label: 'Active',               color: 'bg-red-100 text-red-800 border-red-300' };
     }
   };
 
   const badge = getStatusBadge();
 
   return (
-    <div className="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden mb-4">
-      {/* Map */}
+    <div className="bg-white rounded-3xl shadow-xl border border-red-100 overflow-hidden mb-5 font-body">
       <div className="p-3 pb-0">
         <AnimatedMap address={order.delivery_address || ''} />
       </div>
 
-      {/* Order Info Bar */}
-      <div className="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+      <div className="bg-red-50/50 p-5 border-b border-red-100 flex justify-between items-center">
         <div>
-          <div className="flex items-center gap-2 mb-0.5">
-            <span className="font-black text-lg text-slate-900">#{order.order_number}</span>
-            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border ${badge.color}`}>
+          <div className="flex items-center gap-3 mb-1">
+            <span className="font-black text-xl text-red-950 font-heading">#{order.order_number}</span>
+            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-sm ${badge.color}`}>
               {badge.label}
             </span>
           </div>
-          <p className="text-xs text-slate-400 font-medium">Customer: {order.customer_name}</p>
+          <p className="text-sm text-red-900/60 font-bold">Customer: <span className="text-red-900">{order.customer_name}</span></p>
         </div>
-        <div className="text-right">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total</span>
-          <p className="font-black text-lg text-emerald-600">{Number(order.total_amount).toFixed(2)} DH</p>
+        <div className="text-right bg-white px-4 py-2 rounded-xl shadow-sm border border-red-50">
+          <span className="text-[10px] font-black text-red-900/40 uppercase tracking-widest block mb-0.5">Total</span>
+          <p className="font-black text-lg text-red-600 font-heading">{Number(order.total_amount).toFixed(2)} DH</p>
         </div>
       </div>
 
-      <div className="p-5 space-y-4">
-        {/* Contact */}
-        <div className="flex justify-between items-center">
+      <div className="p-6 space-y-5">
+        <div className="flex justify-between items-center bg-white border border-red-100 rounded-2xl p-4 shadow-sm">
           <div>
-            <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400">Contact Customer</h3>
-            <p className="text-slate-800 font-semibold text-sm mt-0.5">{order.customer_name}</p>
+            <h3 className="font-black text-[10px] uppercase tracking-widest text-red-900/40 mb-1">Contact Customer</h3>
+            <p className="text-red-950 font-bold text-base">{order.customer_name}</p>
           </div>
           <a
             href={`tel:${order.customer_phone}`}
-            className="inline-flex items-center gap-2 px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl font-bold text-xs transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-yellow-400 hover:bg-yellow-500 text-red-950 rounded-xl font-bold text-sm transition-all shadow-md shadow-yellow-400/20 active:scale-95"
           >
-            <Phone className="w-3.5 h-3.5" />
+            <Phone className="w-4 h-4" />
             {order.customer_phone}
           </a>
         </div>
 
-        {/* Address */}
         <div>
-          <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400 mb-1.5">Delivery Address</h3>
-          <div className="flex items-start gap-3 text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-100">
-            <MapPin className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
-            <span className="text-xs font-semibold leading-relaxed">{order.delivery_address || 'No address provided'}</span>
+          <h3 className="font-black text-[10px] uppercase tracking-widest text-red-900/40 mb-2 px-1">Delivery Address</h3>
+          <div className="flex items-start gap-3 text-red-900 bg-red-50 p-4 rounded-2xl border border-red-100 shadow-inner">
+            <MapPin className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+            <span className="text-sm font-bold leading-relaxed">{order.delivery_address || 'No address provided'}</span>
           </div>
           {order.notes && (
-            <div className="mt-2 bg-amber-50 text-amber-800 p-2.5 rounded-xl text-xs border border-amber-100 leading-relaxed">
-              <span className="font-bold">Instructions:</span> {order.notes}
+            <div className="mt-2 bg-yellow-50 text-yellow-900 p-4 rounded-2xl text-sm border border-yellow-200 leading-relaxed flex gap-3">
+              <span className="font-black text-yellow-600 shrink-0">Note:</span>
+              <span className="font-medium">{order.notes}</span>
             </div>
           )}
         </div>
 
-        {/* Distance indicator (shown once arrived) */}
         {currentStatus === 'arrived' && (
-          <div className={`flex items-center justify-between rounded-2xl px-4 py-3 border ${
+          <div className={`flex items-center justify-between rounded-2xl px-5 py-4 border shadow-sm ${
             distanceLoading
-              ? 'bg-slate-50 border-slate-200'
+              ? 'bg-red-50/50 border-red-100'
               : isNearCustomer
-              ? 'bg-emerald-50 border-emerald-200'
+              ? 'bg-green-50 border-green-200'
               : distanceM === null
-              ? 'bg-slate-50 border-slate-200'
+              ? 'bg-red-50/50 border-red-100'
               : 'bg-red-50 border-red-200'
           }`}>
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Distance to customer</p>
-              <p className={`font-black text-base leading-tight ${
-                distanceLoading ? 'text-slate-400 animate-pulse' :
-                isNearCustomer ? 'text-emerald-700' :
-                distanceM === null ? 'text-slate-400' : 'text-red-600'
+              <p className="text-[10px] font-black uppercase tracking-widest text-red-900/40 mb-1">Distance to customer</p>
+              <p className={`font-black text-xl font-heading leading-none ${
+                distanceLoading ? 'text-red-900/40 animate-pulse' :
+                isNearCustomer ? 'text-green-700' :
+                distanceM === null ? 'text-red-900/40' : 'text-red-600'
               }`}>
                 {distanceLoading
-                  ? 'Calculating…'
+                  ? 'Calculating...'
                   : distanceM === null
                   ? 'Location unavailable'
                   : formatDistance(distanceM)}
               </p>
               {distanceM !== null && !distanceLoading && (
-                <p className="text-[10px] font-semibold mt-0.5 text-slate-400">
-                  {isNearCustomer ? '✓ Within 250m — you can deliver!' : `Must be within 250m to deliver`}
+                <p className={`text-xs font-bold mt-1.5 ${isNearCustomer ? 'text-green-600' : 'text-red-500'}`}>
+                  {isNearCustomer ? '✓ Within 250m — you can deliver!' : 'Must be within 250m to deliver'}
                 </p>
               )}
             </div>
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-              isNearCustomer ? 'bg-emerald-100' : 'bg-red-100'
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 shadow-inner ${
+              isNearCustomer ? 'bg-green-100' : 'bg-red-100'
             }`}>
               {isNearCustomer
-                ? <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                : <Lock className="w-5 h-5 text-red-500" />
+                ? <CheckCircle2 className="w-6 h-6 text-green-600" />
+                : <Lock className="w-6 h-6 text-red-500" />
               }
             </div>
           </div>
         )}
 
-        {/* Navigation */}
         <a
           href={`https://maps.google.com/?q=${encodeURIComponent(order.delivery_address || '')}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-black text-white py-3 rounded-xl font-bold text-xs transition-colors shadow"
+          className="w-full flex items-center justify-center gap-2 bg-red-950 hover:bg-red-900 text-white py-4 rounded-2xl font-bold text-sm transition-all shadow-lg shadow-red-950/20 active:scale-[0.98]"
         >
           <Navigation className="w-4 h-4" />
           Open Google Maps Navigation
         </a>
 
-        {/* ── Step-by-Step Actions ─────────────────────────── */}
-        <div className="pt-2 border-t border-slate-100 space-y-2">
-
-          {/* STEP 1: Pick Up */}
+        <div className="pt-4 border-t border-red-100 space-y-3">
           {currentStatus === 'ready' && (
             <button
               id={`pickup-${order.id}`}
               onClick={() => onUpdateStatus(order.id, 'picked_up')}
-              className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 active:scale-[0.97] text-white py-4 rounded-xl font-black text-sm shadow-md shadow-amber-500/30 transition-all"
+              className="w-full flex items-center justify-center gap-3 bg-yellow-400 hover:bg-yellow-500 active:scale-[0.98] text-red-950 py-4.5 px-4 rounded-2xl font-black text-base shadow-lg shadow-yellow-400/30 transition-all border border-yellow-300"
             >
               <Store className="w-5 h-5" />
-              📦 Step 1 — Pick Up from Restaurant
+              Step 1 — Pick Up from Restaurant
             </button>
           )}
 
-          {/* STEP 2: Arrive */}
           {(currentStatus === 'picked_up' || currentStatus === 'out_for_delivery') && (
             <button
               id={`arrive-${order.id}`}
               onClick={() => onUpdateStatus(order.id, 'arrived')}
-              className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.97] text-white py-4 rounded-xl font-black text-sm shadow-md shadow-indigo-600/30 transition-all"
+              className="w-full flex items-center justify-center gap-3 bg-red-600 hover:bg-red-700 active:scale-[0.98] text-white py-4.5 px-4 rounded-2xl font-black text-base shadow-lg shadow-red-600/30 transition-all"
             >
               <MapPinCheck className="w-5 h-5" />
-              📍 Step 2 — Arrived at Customer
+              Step 2 — Arrived at Customer
             </button>
           )}
 
-          {/* STEP 3: Deliver — locked unless within 250m */}
           {currentStatus === 'arrived' && (
             <>
               <button
                 id={`deliver-${order.id}`}
                 disabled={!canDeliver || distanceLoading}
                 onClick={() => onUpdateStatus(order.id, 'completed')}
-                className={`w-full flex items-center justify-center gap-2 py-4 rounded-xl font-black text-sm transition-all ${
+                className={`w-full flex items-center justify-center gap-3 py-4.5 px-4 rounded-2xl font-black text-base transition-all ${
                   canDeliver && !distanceLoading
-                    ? 'bg-emerald-600 hover:bg-emerald-700 active:scale-[0.97] text-white shadow-md shadow-emerald-600/30'
-                    : 'bg-slate-100 text-slate-400 cursor-not-allowed border-2 border-dashed border-slate-300'
+                    ? 'bg-green-600 hover:bg-green-700 active:scale-[0.98] text-white shadow-lg shadow-green-600/30 border border-green-500'
+                    : 'bg-red-50 text-red-900/40 cursor-not-allowed border-2 border-dashed border-red-200'
                 }`}
               >
                 {canDeliver && !distanceLoading
-                  ? <PackageCheck className="w-5 h-5" />
+                  ? <PackageCheck className="w-6 h-6" />
                   : <Lock className="w-5 h-5" />
                 }
                 {distanceLoading
-                  ? 'Checking your location…'
+                  ? 'Checking location...'
                   : canDeliver
-                  ? '✅ Step 3 — Hand Over & Mark Delivered'
-                  : `🔒 Too Far Away (${distanceM !== null ? formatDistance(distanceM) : '?'})`
+                  ? 'Step 3 — Mark Delivered'
+                  : `Too Far (${distanceM !== null ? formatDistance(distanceM) : '?'})`
                 }
               </button>
 
-              {/* Help text when locked */}
               {!canDeliver && !distanceLoading && distanceM !== null && (
-                <p className="text-xs text-center text-red-500 font-semibold pt-1">
-                  You are {formatDistance(distanceM)} away. Move within 250m of the customer to unlock delivery.
+                <p className="text-xs text-center text-red-600 font-bold px-4">
+                  You are {formatDistance(distanceM)} away. Move within 250m to unlock delivery.
                 </p>
               )}
             </>
