@@ -60,9 +60,17 @@ export default function MarketplacePage() {
         </div>
       </header>
 
-      {/* Hero Section - App Store Style */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-red-950 via-red-800 to-red-600">
-        <div className="absolute inset-0 pointer-events-none opacity-20 zellige-bg" />
+      {/* Hero Section */}
+      <div 
+        className="relative overflow-hidden bg-red-950"
+        style={{
+          backgroundImage: 'url("/hero-image.jpg")',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <div className="absolute inset-0 bg-black/60 z-0" />
+        <div className="absolute inset-0 pointer-events-none opacity-20 zellige-bg mix-blend-overlay z-0" />
         <div className="max-w-6xl mx-auto px-6 py-16 md:py-24 relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           <div>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-900/50 border border-red-500/30 text-red-100 text-sm font-bold mb-8 backdrop-blur-sm">
