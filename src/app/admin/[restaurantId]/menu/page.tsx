@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { generateUUID } from "@/lib/utils";
 import { Restaurant, Category, MenuItem } from "@/types";
 import { Store, Plus, Loader2, Save, Trash2, AlertTriangle } from "lucide-react";
 import Link from "next/link";
@@ -48,7 +49,7 @@ export default function AdminMenuPage({ params }: { params: { restaurantId: stri
     e.preventDefault();
     if (!newCatName.trim()) return;
 
-    const id = crypto.randomUUID();
+    const id = generateUUID();
     const { error } = await supabase.from("categories").insert({
       id,
       restaurant_id: params.restaurantId,
@@ -67,7 +68,7 @@ export default function AdminMenuPage({ params }: { params: { restaurantId: stri
     e.preventDefault();
     if (!newItem.name || !newItem.category_id) return;
 
-    const id = crypto.randomUUID();
+    const id = generateUUID();
     const { error } = await supabase.from("menu_items").insert({
       id,
       restaurant_id: params.restaurantId,

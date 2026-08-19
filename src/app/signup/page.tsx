@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { generateUUID } from "@/lib/utils";
 import { Store, ArrowRight, Loader2, MapPin, Phone, Building2, Image as ImageIcon, AlignLeft } from "lucide-react";
 import Link from "next/link";
 
@@ -59,7 +60,7 @@ export default function SignupPage() {
       }
 
       // Generate a new UUID for the restaurant
-      const restaurantId = crypto.randomUUID();
+      const restaurantId = generateUUID();
 
       const { error: insertError } = await supabase.from("restaurants").insert({
         id: restaurantId,

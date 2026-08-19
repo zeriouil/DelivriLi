@@ -1,6 +1,9 @@
 version: '3.8'
 
 services:
+  # ----------------------------------------------------
+  # Next.js Frontend Service
+  # ----------------------------------------------------
   web:
     build:
       context: .
@@ -10,5 +13,71 @@ services:
     env_file:
       - .env.local
     environment:
-      - NODE_ENV=production
-    restart: always
+      # OSRM routing url inside the docker network
+      - OSRM_BASE_URL=http://osrm-routed:5000
+    depends_on:
+      - osrm-routed
+
+  # ----------------------------------------------------
+  # OSRM Data Downloader & Preprocessor
+  # ----------------------------------------------------
+  osrm-prepare:
+    image: osrm/osrm-backend:latest
+    volumes:
+      - osrm-data:/data
+    # Automatically downloads, extracts, partitions and customizes the Morocco map data.
+    # Casablanca coordinates [33.5731, -7.5898] are used within this map area.
+    command: >
+      sh -c "
+        if [ ! -f /data/morocco-latest.osrm ]; then
+          echo '=== Downloading Morocco OpenStreetMap data ===' &&
+          apt-get update && apt-get install -y wget &&
+          wget -O /data/morocco-latest.osm.pbf https://download.geofabrik.de/africa/morocco-latest.osm.pbf &&
+          echo '=== Extracting OSRM data ===' &&
+          osrm-extract -p /usr/local/share/osrm/profiles/car.lua /data/morocco-latest.osm.pbf &&
+          echo '=== Partitioning OSRM data ===' &&
+          osrm-partition /data/morocco-latest.osrm &&
+          echo '=== Customizing OSRM data ===' &&
+          osrm-customize /data/morocco-latest.osrm &&
+          echo '=== OSRM data preparation complete! ==='
+        else
+          echo '=== OSRM data already prepared, skipping build ==='
+        fi
+      "
+
+  # ----------------------------------------------------
+  # OSRM Routing Daemon Service
+  # ----------------------------------------------------
+  osrm-routed:
+    image: osrm/osrm-backend:latest
+    ports:
+      - "5000:5000"
+    volumes:
+      - osrm-data:/data
+    command: osrm-routed --algorithm mld /data/morocco-latest.osrm
+    depends_on:
+      osrm-prepare:
+        condition: service_completed_successfully
+
+  # ----------------------------------------------------
+  # PostgreSQL + PostGIS (Optional / Local Database)
+  # Uncomment this service if you want to run a local database
+  # rather than connecting to Supabase Cloud.
+  # ----------------------------------------------------
+  # db:
+  #   image: postgis/postgis:15-3.3-alpine
+  #   ports:
+  #     - "5432:5432"
+  #   environment:
+  #     - POSTGRES_DB=postgres
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_PASSWORD=postgres
+  #   volumes:
+  #     - db-data:/var/lib/postgresql/data
+  #     # Mount migrations if you want to run SQL scripts on startup
+  #     # - ./supabase/schema.sql:/docker-entrypoint-initdb.d/1_schema.sql
+  #     # - ./supabase/migrations/20260817_osrm_batch_engine.sql:/docker-entrypoint-initdb.d/2_osrm_batch_engine.sql
+
+volumes:
+  osrm-data:
+  # db-data:
