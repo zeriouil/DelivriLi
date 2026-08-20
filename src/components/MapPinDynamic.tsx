@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
@@ -42,24 +42,44 @@ function LocationMarker({ position, setPosition, onChange, readOnly }: {
   );
 }
 
+// Component to handle flying to new coordinates when props change
+function MapUpdater({ lat, lng }: { lat?: number, lng?: number }) {
+  const map = useMap();
+  useEffect(() => {
+    if (lat && lng) {
+      map.flyTo([lat, lng], 15, { animate: true });
+    }
+  }, [lat, lng, map]);
+  return null;
+}
+
 export default function MapPinDynamic({ initialLat, initialLng, onChange, readOnly }: MapPinProps) {
   // Default to Casablanca if no initial coordinates are provided
   const defaultCenter = new L.LatLng(
     initialLat || 33.5731, 
     initialLng || -7.5898
   );
+  
   const [position, setPosition] = useState<L.LatLng | null>(
     (initialLat && initialLng) ? new L.LatLng(initialLat, initialLng) : null
   );
 
+  // Sync position state when props change (like when clicking a suggestion)
+  useEffect(() => {
+    if (initialLat && initialLng) {
+      setPosition(new L.LatLng(initialLat, initialLng));
+    }
+  }, [initialLat, initialLng]);
+
   return (
-    <div className="w-full h-[300px] rounded-xl overflow-hidden border border-slate-200 z-10">
+    <div className="w-full h-[300px] rounded-xl overflow-hidden border border-slate-200 z-10 relative">
       <MapContainer 
         center={defaultCenter} 
         zoom={13} 
         scrollWheelZoom={false} 
         style={{ height: "100%", width: "100%", zIndex: 1 }}
       >
+        <MapUpdater lat={initialLat} lng={initialLng} />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
