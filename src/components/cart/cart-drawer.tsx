@@ -416,6 +416,7 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
                                     setCustomer({ ...customer, deliveryAddress: label });
                                     setDropoffGeo({ lat: parseFloat(s.lat), lng: parseFloat(s.lon), address: label });
                                     setShowSuggestions(false);
+                                    setShowLocationPicker(true);
                                   }}
                                 >
                                   <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-slate-400" />
@@ -511,6 +512,7 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
     {/* ── Delivery Location Picker Modal ── */}
     <DeliveryLocationPicker
       open={showLocationPicker}
+      defaultCenter={dropoffGeo ? [dropoffGeo.lat, dropoffGeo.lng] : undefined}
       onConfirm={(loc) => {
         setDropoffGeo(loc);
         setCustomer(prev => ({ ...prev, deliveryAddress: loc.address }));
