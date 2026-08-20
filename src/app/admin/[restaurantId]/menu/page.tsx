@@ -222,21 +222,26 @@ export default function AdminMenuPage({ params }: { params: { restaurantId: stri
       const publicUrl = urlData.publicUrl;
       console.log("Public URL:", publicUrl);
 
-      // Update state
+      // Update form state — user still needs to click Save Changes
       setEditForm((f) => ({ ...f, image_url: publicUrl }));
 
-      // Auto-save image_url to DB immediately
-      const { error: dbError } = await supabase
+      // Auto-save image_url to DB
+      const { error: dbError, data: dbData } = await supabase
         .from("menu_items")
         .update({ image_url: publicUrl })
-        .eq("id", editingItem.id);
+        .eq("id", editingItem.id)
+        .select();
 
-      if (dbError) console.error("DB save error:", dbError);
-      else await fetchData();
+      console.log("DB update result:", dbData, dbError);
+
+      if (dbError) {
+        console.error("DB save error:", dbError);
+      } else {
+        await fetchData();
+      }
 
     } catch (err: any) {
       console.error("Upload error full:", err);
-      alert("Image upload failed: " + (err.message || JSON.stringify(err)));
     } finally {
       setUploadingImage(false);
       if (imageUploadRef.current) imageUploadRef.current.value = "";
