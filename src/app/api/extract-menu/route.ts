@@ -49,7 +49,6 @@ Return only the raw JSON.`;
         { type: 'text', text: prompt },
         { type: 'image', data: imageBase64, mime_type: mimeType }
       ],
-      response_mime_type: 'application/json',
     });
 
     const resultText = interaction.output_text;
@@ -58,7 +57,10 @@ Return only the raw JSON.`;
       throw new Error('Empty response from AI');
     }
 
-    const json = JSON.parse(resultText);
+    // Strip markdown code fences if present (e.g. ```json ... ```)
+    const cleaned = resultText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+
+    const json = JSON.parse(cleaned);
 
     return NextResponse.json({ success: true, data: json });
   } catch (error: any) {
