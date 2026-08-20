@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/cart-context';
@@ -47,6 +47,35 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
     deliveryAddress: '',
     notes: '',
   });
+
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      if (!showSuggestions || !customer.deliveryAddress || customer.deliveryAddress.length < 3) {
+        setSuggestions([]);
+        return;
+      }
+      setIsSearching(true);
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(customer.deliveryAddress)},Morocco&addressdetails=1&limit=5`);
+        const data = await res.json();
+        setSuggestions(data.slice(0, 5));
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    const delayDebounce = setTimeout(() => {
+      fetchSuggestions();
+    }, 600);
+
+    return () => clearTimeout(delayDebounce);
+  }, [customer.deliveryAddress, showSuggestions]);
 
   if (!isOpen) return null;
 
@@ -367,9 +396,39 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
                           placeholder={dropoffGeo ? 'Additional delivery instructions (optional)' : 'Or type address manually *'}
                           required={!dropoffGeo}
                           value={customer.deliveryAddress}
-                          onChange={e => setCustomer({ ...customer, deliveryAddress: e.target.value })}
+                          onFocus={() => setShowSuggestions(true)}
+                          onChange={e => {
+                            setCustomer({ ...customer, deliveryAddress: e.target.value });
+                            setShowSuggestions(true);
+                          }}
                           className="w-full pl-12 pr-4 py-3.5 text-sm font-bold border-2 border-red-100 rounded-xl focus:ring-0 focus:border-red-400 outline-none bg-white text-red-950 placeholder-red-300 transition-colors shadow-sm resize-none"
                         />
+                        {isSearching && (
+                          <Loader2 className="w-4 h-4 text-red-300 animate-spin absolute right-4 top-4" />
+                        )}
+                        {showSuggestions && suggestions.length > 0 && (
+                          <div className="absolute z-20 w-full bg-white border border-slate-200 rounded-xl shadow-lg mt-1 overflow-hidden">
+                            {suggestions.map((s, idx) => {
+                              const a = s.address;
+                              const label = [a?.road, a?.suburb, a?.city || a?.town || a?.village].filter(Boolean).join(", ") || s.display_name.split(",")[0];
+                              return (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  className="w-full text-left px-4 py-3 hover:bg-slate-50 border-b border-slate-100 last:border-0 transition-colors flex items-start gap-2"
+                                  onClick={() => {
+                                    setCustomer({ ...customer, deliveryAddress: label });
+                                    setDropoffGeo({ lat: parseFloat(s.lat), lng: parseFloat(s.lon), address: label });
+                                    setShowSuggestions(false);
+                                  }}
+                                >
+                                  <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-slate-400" />
+                                  <p className="text-sm font-medium text-slate-900 line-clamp-2">{s.display_name}</p>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
