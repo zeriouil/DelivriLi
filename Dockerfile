@@ -11,16 +11,15 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build-time env vars for NEXT_PUBLIC_* (baked into the JS bundle)
-ARG NEXT_PUBLIC_SUPABASE_URL
-ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
-ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
-ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
+# NEXT_PUBLIC_* vars are baked into the client bundle at build time.
+# These are safe to hardcode — they are already exposed to every browser visitor.
+ENV NEXT_PUBLIC_SUPABASE_URL=https://qtitkjzialsxqwskfudx.supabase.co
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_I5qeXfLg3ASoaiQ_7RE_Hg_FOCiIcFW
 ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN npm run build
 
-# Stage 3: Runner (standalone output)
+# Stage 3: Runner (Next.js standalone output)
 FROM node:18-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
@@ -29,13 +28,13 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy the standalone server bundle
+# Copy the standalone server bundle (includes its own node_modules)
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 
-# Copy static assets
+# Copy static assets (.next/static must sit next to server.js)
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copy public folder (if it exists)
+# Copy public folder
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
 USER nextjs
@@ -44,5 +43,4 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Next.js standalone server entry point
 CMD ["node", "server.js"]
