@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { v4 as uuidv4 } from "uuid";
 import { Restaurant, Category, MenuItem } from "@/types";
-import { Store, Plus, Loader2, Save, Trash2, AlertTriangle, LogOut } from "lucide-react";
+import { Store, Plus, Loader2, Save, Trash2, AlertTriangle, LogOut, Wand2, UploadCloud } from "lucide-react";
 import Link from "next/link";
 
 export default function AdminMenuPage({ params }: { params: { restaurantId: string } }) {
@@ -14,6 +14,10 @@ export default function AdminMenuPage({ params }: { params: { restaurantId: stri
   const [categories, setCategories] = useState<Category[]>([]);
   const [items, setItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Magic Import
+  const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // New Category State
   const [newCatName, setNewCatName] = useState("");
@@ -57,6 +61,71 @@ export default function AdminMenuPage({ params }: { params: { restaurantId: stri
     sessionStorage.removeItem(`auth_${params.restaurantId}`);
     sessionStorage.removeItem("active_restaurant_id");
     router.push(`/login/${params.restaurantId}`);
+  };
+
+  const handleMagicImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    try {
+      // 1. Convert to base64
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve) => {
+        reader.onload = () => resolve(reader.result as string);
+      });
+      reader.readAsDataURL(file);
+      const base64Data = await base64Promise;
+      
+      const [mimePrefix, base64] = base64Data.split(',');
+      const mimeType = mimePrefix.match(/:(.*?);/)?.[1] || 'image/jpeg';
+
+      // 2. Call Gemini extraction API
+      const res = await fetch('/api/extract-menu', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64: base64, mimeType }),
+      });
+      const data = await res.json();
+      
+      if (!data.success) throw new Error(data.error);
+      
+      // 3. Insert into Supabase
+      let maxOrder = categories.reduce((max, c) => Math.max(max, c.display_order), 0);
+      
+      for (const cat of data.data.categories) {
+        maxOrder++;
+        const catId = uuidv4();
+        await supabase.from("categories").insert({
+          id: catId,
+          restaurant_id: params.restaurantId,
+          name: cat.name,
+          display_order: maxOrder,
+          is_active: true,
+        });
+
+        if (cat.items && cat.items.length > 0) {
+          const itemsToInsert = cat.items.map((item: any) => ({
+            id: uuidv4(),
+            restaurant_id: params.restaurantId,
+            category_id: catId,
+            name: item.name,
+            description: item.description || null,
+            base_price: parseFloat(item.price) || 0,
+            is_available: true,
+          }));
+          await supabase.from("menu_items").insert(itemsToInsert);
+        }
+      }
+
+      await fetchData();
+    } catch (err: any) {
+      console.error(err);
+      alert("Failed to import menu: " + err.message);
+    } finally {
+      setIsImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const handleAddCategory = async (e: React.FormEvent) => {
@@ -175,14 +244,44 @@ export default function AdminMenuPage({ params }: { params: { restaurantId: stri
         </section>
 
         {/* Menu Items Section */}
-        <section className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+        <section className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden">
+          {/* Overlay when importing */}
+          {isImporting && (
+            <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center rounded-3xl">
+              <div className="w-16 h-16 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center mb-4">
+                <Wand2 className="w-8 h-8 text-indigo-600 animate-pulse" />
+              </div>
+              <h3 className="text-xl font-black text-indigo-900 mb-2">AI is reading your menu...</h3>
+              <p className="text-indigo-600/70 text-sm font-medium">This usually takes about 5 to 10 seconds.</p>
+              <Loader2 className="w-6 h-6 animate-spin text-indigo-600 mt-6" />
+            </div>
+          )}
+
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-black text-slate-900">Menu Items</h2>
-            {!showItemForm && categories.length > 0 && (
-              <button onClick={() => setShowItemForm(true)} className="bg-indigo-600 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-indigo-700 text-sm">
-                <Plus className="w-4 h-4" /> Add Item
+            <div className="flex items-center gap-2">
+              {/* Hidden file input */}
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleMagicImport} 
+                accept="image/*" 
+                className="hidden" 
+              />
+              <button 
+                onClick={() => fileInputRef.current?.click()} 
+                disabled={isImporting}
+                className="bg-indigo-50 text-indigo-600 border border-indigo-200 px-4 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-indigo-100 transition-colors text-sm"
+              >
+                <Wand2 className="w-4 h-4" /> Magic Import
               </button>
-            )}
+
+              {!showItemForm && categories.length > 0 && (
+                <button onClick={() => setShowItemForm(true)} className="bg-slate-900 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-black transition-colors text-sm">
+                  <Plus className="w-4 h-4" /> Add Item
+                </button>
+              )}
+            </div>
           </div>
 
           {categories.length === 0 && (
