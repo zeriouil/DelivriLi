@@ -279,6 +279,7 @@ export default function AdminMenuPage({ params }: { params: { restaurantId: stri
             <input type="file" accept="image/*" className="hidden" onChange={handleMagicImport} disabled={isImporting} />
           </label>
         </div>
+      </div>
 
       <main className="max-w-5xl mx-auto p-6 space-y-10">
         {!restaurant.is_active && (
