@@ -46,12 +46,10 @@ Return only the raw JSON.`;
     const interaction = await client.interactions.create({
       model: 'gemini-3.6-flash',
       input: [
-        { text: prompt },
-        { inline_data: { data: imageBase64, mime_type: mimeType } }
+        { type: 'text', text: prompt },
+        { type: 'image', data: imageBase64, mime_type: mimeType }
       ],
-      config: {
-        response_mime_type: 'application/json',
-      }
+      response_mime_type: 'application/json',
     });
 
     const resultText = interaction.output_text;
