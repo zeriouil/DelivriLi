@@ -23,6 +23,36 @@ export default function RestaurantSettingsPage({ params }: { params: { restauran
     min_order_amount: 0,
   });
 
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Debounced address search
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      if (!showSuggestions || !formData.address || formData.address.length < 3) {
+        setSuggestions([]);
+        return;
+      }
+      setIsSearching(true);
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(formData.address)}`);
+        const data = await res.json();
+        setSuggestions(data.slice(0, 5));
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    const delayDebounce = setTimeout(() => {
+      fetchSuggestions();
+    }, 600);
+
+    return () => clearTimeout(delayDebounce);
+  }, [formData.address, showSuggestions]);
+
   // Dynamic import of MapPin to avoid SSR issues
   const [MapComponent, setMapComponent] = useState<any>(null);
   useEffect(() => {
@@ -143,18 +173,50 @@ export default function RestaurantSettingsPage({ params }: { params: { restauran
                   />
                 </div>
               </div>
-              <div className="md:col-span-2">
+              <div className="md:col-span-2 relative">
                 <label className="block text-sm font-bold text-slate-700 mb-1.5">Address</label>
                 <div className="relative mb-4">
                   <MapPin className="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    onFocus={() => setShowSuggestions(true)}
+                    onChange={(e) => {
+                      setFormData({ ...formData, address: e.target.value });
+                      setShowSuggestions(true);
+                    }}
                     className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-slate-900"
-                    placeholder="Enter street address"
+                    placeholder="Enter street address or city"
                   />
+                  {isSearching && (
+                    <Loader2 className="w-4 h-4 text-slate-400 animate-spin absolute right-4 top-1/2 -translate-y-1/2" />
+                  )}
                 </div>
+                
+                {/* Suggestions Dropdown */}
+                {showSuggestions && suggestions.length > 0 && (
+                  <div className="absolute z-20 w-full bg-white border border-slate-200 rounded-xl shadow-lg mt-[-12px] overflow-hidden">
+                    {suggestions.map((s, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        className="w-full text-left px-4 py-3 hover:bg-slate-50 border-b border-slate-100 last:border-0 transition-colors"
+                        onClick={() => {
+                          setFormData({ 
+                            ...formData, 
+                            address: s.display_name,
+                            latitude: parseFloat(s.lat),
+                            longitude: parseFloat(s.lon)
+                          });
+                          setShowSuggestions(false);
+                        }}
+                      >
+                        <p className="text-sm font-medium text-slate-900 line-clamp-1">{s.display_name}</p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                
                 {MapComponent && (
                   <div className="mt-2">
                     <label className="block text-sm font-bold text-slate-700 mb-2">Pin Location on Map</label>
