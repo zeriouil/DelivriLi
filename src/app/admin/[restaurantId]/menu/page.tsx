@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { v4 as uuidv4 } from "uuid";
 import { Restaurant, Category, MenuItem } from "@/types";
-import { Store, Plus, Loader2, Save, Trash2, AlertTriangle, LogOut, Wand2, ImagePlus, X, Pencil, Sparkles, Upload } from "lucide-react";
+import { Store, Plus, Loader2, Save, Trash2, AlertTriangle, LogOut, Wand2, ImagePlus, X, Pencil, Sparkles, Upload, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 
 export default function AdminMenuPage({ params }: { params: { restaurantId: string } }) {
@@ -173,6 +173,20 @@ export default function AdminMenuPage({ params }: { params: { restaurantId: stri
   const handleDeleteItem = async (id: string) => {
     await supabase.from("menu_items").delete().eq("id", id);
     fetchData();
+  };
+
+  const handleToggleVisibility = async (item: MenuItem) => {
+    // Optimistic update
+    setItems(current => current.map(i => i.id === item.id ? { ...i, is_available: !item.is_available } : i));
+    
+    const { error } = await supabase.from("menu_items").update({
+      is_available: !item.is_available
+    }).eq("id", item.id);
+
+    if (error) {
+      console.error("Failed to toggle visibility", error);
+      fetchData(); // Revert if failed
+    }
   };
 
   // ── Edit Item ──────────────────────────────────────────────
@@ -435,8 +449,14 @@ export default function AdminMenuPage({ params }: { params: { restaurantId: stri
 
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between">
-                            <h4 className="font-bold text-slate-900 truncate">{item.name}</h4>
+                            <h4 className={`font-bold truncate ${item.is_available ? 'text-slate-900' : 'text-slate-400 line-through'}`}>
+                              {item.name}
+                              {!item.is_available && <span className="ml-2 text-[10px] uppercase font-black bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-sm not-italic no-underline">Hidden</span>}
+                            </h4>
                             <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+                              <button onClick={() => handleToggleVisibility(item)} className={`${item.is_available ? 'text-slate-400 hover:text-slate-600' : 'text-amber-500 hover:text-amber-600'} transition-colors`} title={item.is_available ? "Hide dish" : "Show dish"}>
+                                {item.is_available ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                              </button>
                               <button onClick={() => openEditModal(item)} className="text-slate-300 hover:text-indigo-500 transition-colors" title="Edit">
                                 <Pencil className="w-4 h-4" />
                               </button>

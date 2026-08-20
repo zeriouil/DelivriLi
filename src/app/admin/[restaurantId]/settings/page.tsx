@@ -15,11 +15,19 @@ export default function RestaurantSettingsPage({ params }: { params: { restauran
     description: "",
     phone_number: "",
     address: "",
+    latitude: 0,
+    longitude: 0,
     logo_url: "",
     cover_image_url: "",
     delivery_fee: 0,
     min_order_amount: 0,
   });
+
+  // Dynamic import of MapPin to avoid SSR issues
+  const [MapComponent, setMapComponent] = useState<any>(null);
+  useEffect(() => {
+    import("@/components/MapPin").then((mod) => setMapComponent(() => mod.default));
+  }, []);
 
   useEffect(() => {
     const fetchRestaurant = async () => {
@@ -35,6 +43,8 @@ export default function RestaurantSettingsPage({ params }: { params: { restauran
           description: data.description || "",
           phone_number: data.phone_number || "",
           address: data.address || "",
+          latitude: data.latitude || 33.5731, // Default Casablanca
+          longitude: data.longitude || -7.5898,
           logo_url: data.logo_url || "",
           cover_image_url: data.cover_image_url || "",
           delivery_fee: data.delivery_fee || 0,
@@ -60,6 +70,8 @@ export default function RestaurantSettingsPage({ params }: { params: { restauran
           description: formData.description,
           phone_number: formData.phone_number,
           address: formData.address,
+          latitude: formData.latitude,
+          longitude: formData.longitude,
           logo_url: formData.logo_url,
           cover_image_url: formData.cover_image_url,
           delivery_fee: parseFloat(formData.delivery_fee.toString()),
@@ -133,15 +145,27 @@ export default function RestaurantSettingsPage({ params }: { params: { restauran
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-bold text-slate-700 mb-1.5">Address</label>
-                <div className="relative">
+                <div className="relative mb-4">
                   <MapPin className="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-slate-900"
+                    placeholder="Enter street address"
                   />
                 </div>
+                {MapComponent && (
+                  <div className="mt-2">
+                    <label className="block text-sm font-bold text-slate-700 mb-2">Pin Location on Map</label>
+                    <MapComponent 
+                      initialLat={formData.latitude || 33.5731} 
+                      initialLng={formData.longitude || -7.5898} 
+                      onChange={(lat: number, lng: number) => setFormData(f => ({ ...f, latitude: lat, longitude: lng }))} 
+                    />
+                    <p className="text-xs text-slate-500 mt-2">Click anywhere on the map to pin your restaurant's exact location.</p>
+                  </div>
+                )}
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-bold text-slate-700 mb-1.5">Description</label>

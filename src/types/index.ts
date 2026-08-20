@@ -11,6 +11,8 @@ export interface Restaurant {
   currency_code: string; // 'MAD'
   currency_symbol: string; // 'DH'
   address?: string;
+  latitude?: number;
+  longitude?: number;
   delivery_fee: number;
   min_order_amount: number;
   is_active: boolean;
