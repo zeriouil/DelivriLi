@@ -25,7 +25,7 @@ export default function AdminIndexRedirect() {
         .single();
 
       if (rest) {
-        router.replace(`/admin/${rest.id}/orders`);
+        router.replace(`/admin/${rest.id}/menu`);
       } else {
         // Logged in but no restaurant? Something is wrong or they are just a customer.
         await supabase.auth.signOut();
