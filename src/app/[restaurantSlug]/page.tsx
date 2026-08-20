@@ -3,13 +3,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Search, ShoppingBag, MapPin, Star, Clock, Flame, Heart,
-  ChevronDown, X, Zap, Tag, TrendingUp, Loader2, Store, Utensils
+  ChevronDown, X, Tag, TrendingUp, Loader2, Store, Utensils
 } from 'lucide-react';
 import { MenuItem, Category, Restaurant } from '@/types';
 import { useCart } from '@/context/cart-context';
 import { ItemModal } from '@/components/customer/item-modal';
 import { CartDrawer } from '@/components/cart/cart-drawer';
 import { supabase } from '@/lib/supabase';
+import { BlurFade } from '@/components/ui/blur-fade';
+import { MagicCard } from '@/components/ui/magic-card';
+import { Marquee } from '@/components/ui/marquee';
+import { PulsatingButton } from '@/components/ui/pulsating-button';
+import { ShineBorder } from '@/components/ui/shine-border';
 
 const BADGE_STYLE: Record<string, string> = {
   'Best Seller': 'bg-yellow-400/20 text-yellow-700 border border-yellow-300',
@@ -42,7 +47,6 @@ export default function CustomerMenuPage({ params }: { params: { restaurantSlug:
   const [sortBy, setSortBy] = useState<SortOption>('default');
   const [showSort, setShowSort] = useState(false);
   const [favourites, setFavourites] = useState<Set<string>>(new Set());
-  const [promoIdx, setPromoIdx] = useState(0);
   const [cartBump, setCartBump] = useState(false);
   const prevCount = useRef(totalItemCount);
 
@@ -71,11 +75,6 @@ export default function CustomerMenuPage({ params }: { params: { restaurantSlug:
       const saved = localStorage.getItem('menu_favourites');
       if (saved) setFavourites(new Set(JSON.parse(saved)));
     } catch {}
-  }, []);
-
-  useEffect(() => {
-    const t = setInterval(() => setPromoIdx(i => (i + 1) % PROMOS.length), 4000);
-    return () => clearInterval(t);
   }, []);
 
   useEffect(() => {
@@ -171,9 +170,13 @@ export default function CustomerMenuPage({ params }: { params: { restaurantSlug:
           </div>
 
           {/* Promo Banner */}
-          <div className="mb-5 bg-white/10 border border-white/20 rounded-2xl px-4 py-3 flex items-center gap-3 text-sm font-bold backdrop-blur-md overflow-hidden shadow-inner">
-            <Tag className="w-4 h-4 flex-shrink-0 text-yellow-400" />
-            <span className="animate-fade-in text-red-50" key={promoIdx}>{PROMOS[promoIdx]}</span>
+          <div className="mb-5 bg-white/10 border border-white/20 rounded-2xl px-2 py-2 flex items-center gap-2 text-sm font-bold backdrop-blur-md overflow-hidden shadow-inner">
+            <Tag className="w-4 h-4 flex-shrink-0 text-yellow-400 ml-2" />
+            <Marquee pauseOnHover className="[--duration:22s] p-0 flex-1">
+              {PROMOS.map((promo) => (
+                <span key={promo} className="text-red-50 whitespace-nowrap px-4">{promo}</span>
+              ))}
+            </Marquee>
           </div>
 
           {/* Search */}
@@ -278,13 +281,18 @@ export default function CustomerMenuPage({ params }: { params: { restaurantSlug:
           </div>
         ) : (
           filteredItems.map((item, idx) => (
-            <div
-              key={item.id}
-              onClick={() => item.is_available && setActiveModalItem(item)}
-              className={`bg-white rounded-[24px] shadow-sm border border-red-100 overflow-hidden card-lift animate-slide-up hover:shadow-md transition-all ${
-                !item.is_available ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:border-red-300'
+            <BlurFade key={item.id} delay={Math.min(idx * 0.04, 0.4)}>
+            <MagicCard
+              gradientFrom="#dc2626"
+              gradientTo="#eab308"
+              gradientColor="#fecaca40"
+              className={`rounded-[24px] ${
+                !item.is_available ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
               }`}
-              style={{ animationDelay: `${idx * 0.05}s` }}
+            >
+            <div
+              onClick={() => item.is_available && setActiveModalItem(item)}
+              className="bg-white rounded-[24px] overflow-hidden"
             >
               <div className="flex p-4 gap-4">
                 {/* Text side */}
@@ -346,6 +354,8 @@ export default function CustomerMenuPage({ params }: { params: { restaurantSlug:
                 </div>
               </div>
             </div>
+            </MagicCard>
+            </BlurFade>
           ))
         )}
       </main>
@@ -354,20 +364,26 @@ export default function CustomerMenuPage({ params }: { params: { restaurantSlug:
       {totalItemCount > 0 && (
         <div className="fixed bottom-6 left-0 right-0 z-40 px-6 animate-slide-up pointer-events-none">
           <div className="max-w-lg mx-auto pointer-events-auto">
-            <button
-              onClick={() => setIsCartOpen(true)}
-              className={`w-full bg-red-600 text-white p-4.5 rounded-[24px] shadow-2xl shadow-red-600/30 flex items-center justify-between font-bold text-base transition-all duration-300 active:scale-95 border-2 border-red-500 hover:bg-red-700 ${cartBump ? 'scale-105' : 'scale-100'}`}
-            >
-              <div className="flex items-center gap-4">
-                <span className="text-sm w-9 h-9 rounded-full font-black flex items-center justify-center animate-pulse-glow bg-yellow-400 text-red-950 shadow-inner">
-                  {totalItemCount}
+            <div className="relative overflow-hidden rounded-[24px]">
+              <ShineBorder shineColor={["#facc15", "#dc2626"]} borderWidth={2} />
+              <PulsatingButton
+                pulseColor="rgba(220,38,38,0.45)"
+                onClick={() => setIsCartOpen(true)}
+                className={`w-full bg-red-600 text-white p-4 rounded-[24px] shadow-2xl shadow-red-600/30 font-bold text-base transition-all duration-300 active:scale-95 ${cartBump ? 'scale-105' : 'scale-100'}`}
+              >
+                <span className="flex w-full items-center justify-between">
+                  <span className="flex items-center gap-4">
+                    <span className="text-sm w-9 h-9 rounded-full font-black flex items-center justify-center bg-yellow-400 text-red-950 shadow-inner">
+                      {totalItemCount}
+                    </span>
+                    <span className="tracking-wide">View Order</span>
+                  </span>
+                  <span className="font-black text-xl text-yellow-400 bg-red-900/30 px-3 py-1 rounded-xl">
+                    {subtotal.toFixed(2)} {restaurant.currency_symbol}
+                  </span>
                 </span>
-                <span className="tracking-wide">View Order</span>
-              </div>
-              <span className="font-black text-xl text-yellow-400 bg-red-900/30 px-3 py-1 rounded-xl">
-                {subtotal.toFixed(2)} {restaurant.currency_symbol}
-              </span>
-            </button>
+              </PulsatingButton>
+            </div>
           </div>
         </div>
       )}

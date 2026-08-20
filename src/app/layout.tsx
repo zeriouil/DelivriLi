@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Playfair_Display_SC, Karla } from 'next/font/google';
 import './globals.css';
 import { CartProvider } from '@/context/cart-context';
+import { ThemeProvider } from '@/components/theme-provider';
 
 const playfair = Playfair_Display_SC({
   subsets: ['latin'],
@@ -44,9 +45,11 @@ export default function RootLayout({
   return (
     <html lang="fr" dir="ltr" className={`antialiased scroll-smooth ${playfair.variable} ${karla.variable}`}>
       <body className={`${karla.className} min-h-[100dvh] bg-[#fef2f2] text-[#450a0a] selection:bg-amber-200 selection:text-amber-900`}>
-        <CartProvider>
-          {children}
-        </CartProvider>
+        <ThemeProvider>
+          <CartProvider>
+            {children}
+          </CartProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

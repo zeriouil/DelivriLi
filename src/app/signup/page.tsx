@@ -6,6 +6,11 @@ import { supabase } from "@/lib/supabase";
 import { v4 as uuidv4 } from "uuid";
 import { Store, ArrowRight, Loader2, MapPin, Phone, Building2, Image as ImageIcon, AlignLeft } from "lucide-react";
 import Link from "next/link";
+import { BlurFade } from "@/components/ui/blur-fade";
+import { Particles } from "@/components/ui/particles";
+import { ShimmerButton } from "@/components/ui/shimmer-button";
+import { ShineBorder } from "@/components/ui/shine-border";
+import { SparklesText } from "@/components/ui/sparkles-text";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -90,24 +95,30 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-[Outfit] flex flex-col">
-      <header className="bg-white border-b border-slate-100 px-4 h-16 flex items-center shrink-0">
+    <div className="min-h-screen bg-[#fef2f2] relative overflow-hidden flex flex-col">
+      <Particles className="absolute inset-0" quantity={40} color="#dc2626" size={0.4} />
+
+      <header className="relative z-10 bg-white/80 backdrop-blur-xl border-b border-red-100 px-4 h-16 flex items-center shrink-0">
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center">
+          <div className="w-8 h-8 bg-gradient-to-br from-red-600 to-red-800 rounded-xl flex items-center justify-center">
             <span className="text-white font-black text-sm">DL</span>
           </div>
-          <span className="font-black text-xl text-slate-900 tracking-tight">DelivriLi</span>
+          <span className="font-black text-xl text-red-950 tracking-tight font-heading">DelivriLi</span>
         </Link>
       </header>
 
-      <div className="flex-1 flex items-center justify-center p-4 py-12">
-        <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 w-full max-w-lg overflow-hidden">
-          <div className="bg-indigo-600 p-8 text-white text-center">
+      <div className="flex-1 flex items-center justify-center p-4 py-12 relative z-10">
+        <BlurFade className="w-full max-w-lg">
+        <div className="relative bg-white rounded-3xl shadow-xl border border-red-100 w-full overflow-hidden">
+          <ShineBorder shineColor={["#dc2626", "#eab308", "#991b1b"]} borderWidth={2} />
+          <div className="bg-gradient-to-br from-red-950 via-red-800 to-red-600 p-8 text-white text-center">
             <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Store className="w-8 h-8 text-white" />
             </div>
-            <h2 className="text-2xl font-black mb-2">Partner with DelivriLi</h2>
-            <p className="text-indigo-100 font-medium text-sm">
+            <SparklesText className="text-2xl font-heading text-white mb-2" colors={{ first: "#facc15", second: "#fff" }} sparklesCount={6}>
+              Partner with DelivriLi
+            </SparklesText>
+            <p className="text-red-100 font-medium text-sm">
               Create your digital menu and start receiving orders in minutes.
             </p>
           </div>
@@ -121,24 +132,24 @@ export default function SignupPage() {
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1.5">Restaurant Name <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-bold text-red-950 mb-1.5">Restaurant Name <span className="text-red-500">*</span></label>
                 <div className="relative">
-                  <Building2 className="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Building2 className="w-5 h-5 text-red-300 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     required
                     value={formData.name}
                     onChange={handleNameChange}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition-all font-medium text-slate-700"
+                    className="w-full pl-10 pr-4 py-3 bg-red-50/50 border border-red-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-all font-medium text-red-950"
                     placeholder="e.g. Burger Palace"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1.5">Store URL</label>
-                <div className="flex bg-slate-50 border border-slate-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-indigo-600/20 focus-within:border-indigo-600 transition-all">
-                  <span className="px-3 py-3 bg-slate-100 text-slate-500 font-medium text-sm border-r border-slate-200 flex-shrink-0">
+                <label className="block text-sm font-bold text-red-950 mb-1.5">Store URL</label>
+                <div className="flex bg-red-50/50 border border-red-100 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-red-600/20 focus-within:border-red-600 transition-all">
+                  <span className="px-3 py-3 bg-red-50 text-red-400 font-medium text-sm border-r border-red-100 flex-shrink-0">
                     delivrili.com/
                   </span>
                   <input
@@ -146,49 +157,49 @@ export default function SignupPage() {
                     required
                     value={formData.slug}
                     onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                    className="w-full px-3 py-3 bg-transparent outline-none font-medium text-slate-700"
+                    className="w-full px-3 py-3 bg-transparent outline-none font-medium text-red-950"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1.5">Phone Number <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-bold text-red-950 mb-1.5">Phone Number <span className="text-red-500">*</span></label>
                 <div className="relative">
-                  <Phone className="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Phone className="w-5 h-5 text-red-300 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="tel"
                     required
                     value={formData.phone_number}
                     onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition-all font-medium text-slate-700"
+                    className="w-full pl-10 pr-4 py-3 bg-red-50/50 border border-red-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-all font-medium text-red-950"
                     placeholder="+212 6..."
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1.5">Address</label>
+                <label className="block text-sm font-bold text-red-950 mb-1.5">Address</label>
                 <div className="relative">
-                  <MapPin className="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <MapPin className="w-5 h-5 text-red-300 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition-all font-medium text-slate-700"
+                    className="w-full pl-10 pr-4 py-3 bg-red-50/50 border border-red-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-all font-medium text-red-950"
                     placeholder="City, Street..."
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1.5">Description</label>
+                <label className="block text-sm font-bold text-red-950 mb-1.5">Description</label>
                 <div className="relative">
-                  <AlignLeft className="w-5 h-5 text-slate-400 absolute left-3 top-3" />
+                  <AlignLeft className="w-5 h-5 text-red-300 absolute left-3 top-3" />
                   <textarea
                     rows={3}
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition-all font-medium text-slate-700"
+                    className="w-full pl-10 pr-4 py-3 bg-red-50/50 border border-red-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-all font-medium text-red-950"
                     placeholder="Tell customers about your restaurant..."
                   />
                 </div>
@@ -196,27 +207,27 @@ export default function SignupPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1.5">Logo Image URL</label>
+                  <label className="block text-sm font-bold text-red-950 mb-1.5">Logo Image URL</label>
                   <div className="relative">
-                    <ImageIcon className="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <ImageIcon className="w-5 h-5 text-red-300 absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       type="url"
                       value={formData.logo_url}
                       onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
-                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition-all font-medium text-slate-700"
+                      className="w-full pl-10 pr-4 py-3 bg-red-50/50 border border-red-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-all font-medium text-red-950"
                       placeholder="https://..."
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1.5">Cover Image URL</label>
+                  <label className="block text-sm font-bold text-red-950 mb-1.5">Cover Image URL</label>
                   <div className="relative">
-                    <ImageIcon className="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <ImageIcon className="w-5 h-5 text-red-300 absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       type="url"
                       value={formData.cover_image_url}
                       onChange={(e) => setFormData({ ...formData, cover_image_url: e.target.value })}
-                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition-all font-medium text-slate-700"
+                      className="w-full pl-10 pr-4 py-3 bg-red-50/50 border border-red-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-all font-medium text-red-950"
                       placeholder="https://..."
                     />
                   </div>
@@ -225,47 +236,50 @@ export default function SignupPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1.5">Delivery Fee (DH)</label>
+                  <label className="block text-sm font-bold text-red-950 mb-1.5">Delivery Fee (DH)</label>
                   <input
                     type="number"
                     min="0"
                     value={formData.delivery_fee}
                     onChange={(e) => setFormData({ ...formData, delivery_fee: e.target.value })}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition-all font-medium text-slate-700"
+                    className="w-full px-4 py-3 bg-red-50/50 border border-red-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-all font-medium text-red-950"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1.5">Min. Order (DH)</label>
+                  <label className="block text-sm font-bold text-red-950 mb-1.5">Min. Order (DH)</label>
                   <input
                     type="number"
                     min="0"
                     value={formData.min_order_amount}
                     onChange={(e) => setFormData({ ...formData, min_order_amount: e.target.value })}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition-all font-medium text-slate-700"
+                    className="w-full px-4 py-3 bg-red-50/50 border border-red-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-all font-medium text-red-950"
                   />
                 </div>
               </div>
 
-              <button
+              <ShimmerButton
                 type="submit"
                 disabled={loading}
-                className="w-full mt-6 py-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-lg flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-70 disabled:pointer-events-none"
+                background="rgb(220, 38, 38)"
+                shimmerColor="#facc15"
+                className="w-full mt-6 py-4 rounded-xl font-black text-lg disabled:opacity-70 disabled:pointer-events-none"
               >
                 {loading ? (
-                  <>
+                  <span className="flex items-center justify-center gap-2">
                     <Loader2 className="w-5 h-5 animate-spin" />
                     Creating Account...
-                  </>
+                  </span>
                 ) : (
-                  <>
+                  <span className="flex items-center justify-center gap-2">
                     Create Restaurant
                     <ArrowRight className="w-5 h-5" />
-                  </>
+                  </span>
                 )}
-              </button>
+              </ShimmerButton>
             </form>
           </div>
         </div>
+        </BlurFade>
       </div>
     </div>
   );
