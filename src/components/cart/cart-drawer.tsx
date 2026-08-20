@@ -146,7 +146,6 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
         delivery_fee: deliveryFee,
         total_amount: grandTotal,
         status: 'pending',
-        whatsapp_sent: true,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
@@ -155,9 +154,6 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
         const existing = JSON.parse(localStorage.getItem('local_orders_list') || '[]');
         localStorage.setItem('local_orders_list', JSON.stringify([localOrder, ...existing]));
       } catch {}
-
-      const waUrl = generateWhatsAppOrderUrl(restaurant, items, customer, subtotal, deliveryFee, grandTotal);
-      window.open(waUrl, '_blank');
 
       clearCart();
       onClose();
@@ -350,7 +346,7 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
                     <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-red-300" />
                     <input
                       type="tel"
-                      placeholder="Phone (WhatsApp) *"
+                      placeholder="Phone Number *"
                       required
                       value={customer.phone}
                       onChange={e => setCustomer({ ...customer, phone: e.target.value })}
@@ -499,7 +495,7 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
                 <><Loader2 className="w-5 h-5 animate-spin" /><span className="mx-auto">Processing…</span></>
               ) : (
                 <>
-                  <span className="flex items-center gap-2 tracking-wide"><ShoppingBag className="w-5 h-5"/> Place Order via WhatsApp</span>
+                  <span className="flex items-center gap-2 tracking-wide"><ShoppingBag className="w-5 h-5"/> Place Order</span>
                   <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
                     <ChevronRight className="w-5 h-5" />
                   </div>
