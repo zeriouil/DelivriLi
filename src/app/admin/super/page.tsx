@@ -3,16 +3,20 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Restaurant } from "@/types";
-import { ShieldCheck, Loader2, CheckCircle, XCircle, Store, Eye, EyeOff } from "lucide-react";
+import { ShieldCheck, Loader2, CheckCircle, XCircle, Store, Eye, EyeOff, MessageCircle, Copy, Check } from "lucide-react";
 import Link from "next/link";
+import { generateApprovalWhatsAppUrl } from "@/lib/whatsapp";
 
 export default function SuperAdminPage() {
   const [authenticated, setAuthenticated] = useState(false);
   const [passcode, setPasscode] = useState("");
   const [error, setError] = useState("");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const BASE_URL = typeof window !== "undefined" ? window.location.origin : "";
 
   // Hardcoded simple PIN for prototype
   const SUPER_SECRET_PIN = "1234";
@@ -53,9 +57,23 @@ export default function SuperAdminPage() {
     
     if (!error) {
       fetchRestaurants();
+      // If approving, send WhatsApp notification
+      if (!currentStatus) {
+        const restaurant = restaurants.find(r => r.id === id);
+        if (restaurant) {
+          const waUrl = generateApprovalWhatsAppUrl(restaurant, BASE_URL);
+          window.open(waUrl, "_blank");
+        }
+      }
     } else {
       alert("Error updating status. Make sure you ran the updated SQL script!");
     }
+  };
+
+  const copyLoginLink = (id: string) => {
+    navigator.clipboard.writeText(`${BASE_URL}/login/${id}`);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
   if (!authenticated) {
@@ -122,8 +140,9 @@ export default function SuperAdminPage() {
                   <tr className="bg-slate-50 border-b border-slate-100">
                     <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Restaurant</th>
                     <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Contact</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">PIN</th>
                     <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Action</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -146,6 +165,12 @@ export default function SuperAdminPage() {
                       </td>
                       <td className="px-6 py-4">
                         <p className="text-sm font-medium text-slate-700">{restaurant.phone_number}</p>
+                        {restaurant.email && <p className="text-xs text-slate-400">{restaurant.email}</p>}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="font-mono font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded-lg text-sm tracking-widest">
+                          {restaurant.access_pin ?? <span className="text-slate-400 italic text-xs font-sans">not set</span>}
+                        </span>
                       </td>
                       <td className="px-6 py-4">
                         {restaurant.is_active ? (
@@ -159,21 +184,33 @@ export default function SuperAdminPage() {
                         )}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        {restaurant.is_active ? (
+                        <div className="flex items-center justify-end gap-2">
+                          {/* Copy login link */}
                           <button
-                            onClick={() => toggleStatus(restaurant.id, restaurant.is_active)}
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-rose-100 hover:text-rose-700 text-slate-600 rounded-xl text-sm font-bold transition-colors"
+                            onClick={() => copyLoginLink(restaurant.id)}
+                            title="Copy login link"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition-colors"
                           >
-                            <EyeOff className="w-4 h-4" /> Suspend
+                            {copiedId === restaurant.id ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+                            {copiedId === restaurant.id ? "Copied!" : "Link"}
                           </button>
-                        ) : (
-                          <button
-                            onClick={() => toggleStatus(restaurant.id, restaurant.is_active)}
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold transition-colors shadow-sm shadow-indigo-600/20"
-                          >
-                            <Eye className="w-4 h-4" /> Approve
-                          </button>
-                        )}
+
+                          {restaurant.is_active ? (
+                            <button
+                              onClick={() => toggleStatus(restaurant.id, restaurant.is_active)}
+                              className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-rose-100 hover:text-rose-700 text-slate-600 rounded-xl text-sm font-bold transition-colors"
+                            >
+                              <EyeOff className="w-4 h-4" /> Suspend
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => toggleStatus(restaurant.id, restaurant.is_active)}
+                              className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-bold transition-colors shadow-sm shadow-green-600/20"
+                            >
+                              <MessageCircle className="w-4 h-4" /> Approve + Notify
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}

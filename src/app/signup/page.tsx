@@ -4,7 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { v4 as uuidv4 } from "uuid";
-import { Store, ArrowRight, Loader2, MapPin, Phone, Building2, Image as ImageIcon, AlignLeft } from "lucide-react";
+import {
+  Store, ArrowRight, Loader2, MapPin, Phone, Building2,
+  Image as ImageIcon, AlignLeft, Mail, Lock, Eye, EyeOff
+} from "lucide-react";
 import Link from "next/link";
 import { BlurFade } from "@/components/ui/blur-fade";
 import { Particles } from "@/components/ui/particles";
@@ -16,11 +19,14 @@ export default function SignupPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPin, setShowPin] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
     slug: "",
+    email: "",
     phone_number: "",
+    access_pin: "",
     address: "",
     description: "",
     logo_url: "",
@@ -35,11 +41,7 @@ export default function SignupPage() {
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.value;
-    setFormData((prev) => ({
-      ...prev,
-      name,
-      slug: generateSlug(name), // auto-generate slug
-    }));
+    setFormData((prev) => ({ ...prev, name, slug: generateSlug(name) }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,12 +50,14 @@ export default function SignupPage() {
     setError(null);
 
     try {
-      // Basic validation
       if (!formData.name || !formData.slug || !formData.phone_number) {
         throw new Error("Please fill in all required fields.");
       }
+      if (formData.access_pin.length !== 4 || !/^\d{4}$/.test(formData.access_pin)) {
+        throw new Error("Access PIN must be exactly 4 digits.");
+      }
 
-      // Check if slug exists
+      // Check if slug already exists
       const { data: existing } = await supabase
         .from("restaurants")
         .select("id")
@@ -64,13 +68,14 @@ export default function SignupPage() {
         throw new Error("This restaurant URL is already taken. Please choose another name or modify the URL.");
       }
 
-      // Generate a new UUID for the restaurant
       const restaurantId = uuidv4();
 
       const { error: insertError } = await supabase.from("restaurants").insert({
         id: restaurantId,
         slug: formData.slug,
         name: formData.name,
+        email: formData.email,
+        access_pin: formData.access_pin,
         description: formData.description,
         logo_url: formData.logo_url,
         cover_image_url: formData.cover_image_url,
@@ -85,8 +90,8 @@ export default function SignupPage() {
 
       if (insertError) throw insertError;
 
-      // Redirect to the new restaurant's menu dashboard
-      router.push(`/admin/${restaurantId}/menu`);
+      // Redirect to pending approval page
+      router.push(`/pending/${restaurantId}`);
     } catch (err: any) {
       setError(err.message || "An error occurred during signup.");
     } finally {
@@ -109,176 +114,176 @@ export default function SignupPage() {
 
       <div className="flex-1 flex items-center justify-center p-4 py-12 relative z-10">
         <BlurFade className="w-full max-w-lg">
-        <div className="relative bg-white rounded-3xl shadow-xl border border-red-100 w-full overflow-hidden">
-          <ShineBorder shineColor={["#dc2626", "#eab308", "#991b1b"]} borderWidth={2} />
-          <div className="bg-gradient-to-br from-red-950 via-red-800 to-red-600 p-8 text-white text-center">
-            <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Store className="w-8 h-8 text-white" />
+          <div className="relative bg-white rounded-3xl shadow-xl border border-red-100 w-full overflow-hidden">
+            <ShineBorder shineColor={["#dc2626", "#eab308", "#991b1b"]} borderWidth={2} />
+            <div className="bg-gradient-to-br from-red-950 via-red-800 to-red-600 p-8 text-white text-center">
+              <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Store className="w-8 h-8 text-white" />
+              </div>
+              <SparklesText className="text-2xl font-heading text-white mb-2" colors={{ first: "#facc15", second: "#fff" }} sparklesCount={6}>
+                Partner with DelivriLi
+              </SparklesText>
+              <p className="text-red-100 font-medium text-sm">
+                Create your digital menu and start receiving orders in minutes.
+              </p>
             </div>
-            <SparklesText className="text-2xl font-heading text-white mb-2" colors={{ first: "#facc15", second: "#fff" }} sparklesCount={6}>
-              Partner with DelivriLi
-            </SparklesText>
-            <p className="text-red-100 font-medium text-sm">
-              Create your digital menu and start receiving orders in minutes.
-            </p>
-          </div>
 
-          <div className="p-8">
-            {error && (
-              <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-semibold mb-6 border border-red-100">
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <label className="block text-sm font-bold text-red-950 mb-1.5">Restaurant Name <span className="text-red-500">*</span></label>
-                <div className="relative">
-                  <Building2 className="w-5 h-5 text-red-300 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={handleNameChange}
-                    className="w-full pl-10 pr-4 py-3 bg-red-50/50 border border-red-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-all font-medium text-red-950"
-                    placeholder="e.g. Burger Palace"
-                  />
+            <div className="p-8">
+              {error && (
+                <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-semibold mb-6 border border-red-100">
+                  {error}
                 </div>
-              </div>
+              )}
 
-              <div>
-                <label className="block text-sm font-bold text-red-950 mb-1.5">Store URL</label>
-                <div className="flex bg-red-50/50 border border-red-100 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-red-600/20 focus-within:border-red-600 transition-all">
-                  <span className="px-3 py-3 bg-red-50 text-red-400 font-medium text-sm border-r border-red-100 flex-shrink-0">
-                    delivrili.com/
-                  </span>
-                  <input
-                    type="text"
-                    required
-                    value={formData.slug}
-                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                    className="w-full px-3 py-3 bg-transparent outline-none font-medium text-red-950"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-red-950 mb-1.5">Phone Number <span className="text-red-500">*</span></label>
-                <div className="relative">
-                  <Phone className="w-5 h-5 text-red-300 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="tel"
-                    required
-                    value={formData.phone_number}
-                    onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-                    className="w-full pl-10 pr-4 py-3 bg-red-50/50 border border-red-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-all font-medium text-red-950"
-                    placeholder="+212 6..."
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-red-950 mb-1.5">Address</label>
-                <div className="relative">
-                  <MapPin className="w-5 h-5 text-red-300 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    className="w-full pl-10 pr-4 py-3 bg-red-50/50 border border-red-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-all font-medium text-red-950"
-                    placeholder="City, Street..."
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-red-950 mb-1.5">Description</label>
-                <div className="relative">
-                  <AlignLeft className="w-5 h-5 text-red-300 absolute left-3 top-3" />
-                  <textarea
-                    rows={3}
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full pl-10 pr-4 py-3 bg-red-50/50 border border-red-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-all font-medium text-red-950"
-                    placeholder="Tell customers about your restaurant..."
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Restaurant Name */}
                 <div>
-                  <label className="block text-sm font-bold text-red-950 mb-1.5">Logo Image URL</label>
+                  <label className="block text-sm font-bold text-red-950 mb-1.5">Restaurant Name <span className="text-red-500">*</span></label>
                   <div className="relative">
-                    <ImageIcon className="w-5 h-5 text-red-300 absolute left-3 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="url"
-                      value={formData.logo_url}
-                      onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
+                    <Building2 className="w-5 h-5 text-red-300 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input type="text" required value={formData.name} onChange={handleNameChange}
                       className="w-full pl-10 pr-4 py-3 bg-red-50/50 border border-red-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-all font-medium text-red-950"
-                      placeholder="https://..."
-                    />
+                      placeholder="e.g. Burger Palace" />
                   </div>
                 </div>
+
+                {/* Store URL */}
                 <div>
-                  <label className="block text-sm font-bold text-red-950 mb-1.5">Cover Image URL</label>
-                  <div className="relative">
-                    <ImageIcon className="w-5 h-5 text-red-300 absolute left-3 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="url"
-                      value={formData.cover_image_url}
-                      onChange={(e) => setFormData({ ...formData, cover_image_url: e.target.value })}
-                      className="w-full pl-10 pr-4 py-3 bg-red-50/50 border border-red-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-all font-medium text-red-950"
-                      placeholder="https://..."
-                    />
+                  <label className="block text-sm font-bold text-red-950 mb-1.5">Store URL</label>
+                  <div className="flex bg-red-50/50 border border-red-100 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-red-600/20 focus-within:border-red-600 transition-all">
+                    <span className="px-3 py-3 bg-red-50 text-red-400 font-medium text-sm border-r border-red-100 flex-shrink-0">delivrili.com/</span>
+                    <input type="text" required value={formData.slug}
+                      onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                      className="w-full px-3 py-3 bg-transparent outline-none font-medium text-red-950" />
                   </div>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4">
+                {/* Phone */}
                 <div>
-                  <label className="block text-sm font-bold text-red-950 mb-1.5">Delivery Fee (DH)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={formData.delivery_fee}
-                    onChange={(e) => setFormData({ ...formData, delivery_fee: e.target.value })}
-                    className="w-full px-4 py-3 bg-red-50/50 border border-red-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-all font-medium text-red-950"
-                  />
+                  <label className="block text-sm font-bold text-red-950 mb-1.5">Phone Number <span className="text-red-500">*</span></label>
+                  <div className="relative">
+                    <Phone className="w-5 h-5 text-red-300 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input type="tel" required value={formData.phone_number}
+                      onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+                      className="w-full pl-10 pr-4 py-3 bg-red-50/50 border border-red-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-all font-medium text-red-950"
+                      placeholder="+212 6..." />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-bold text-red-950 mb-1.5">Min. Order (DH)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={formData.min_order_amount}
-                    onChange={(e) => setFormData({ ...formData, min_order_amount: e.target.value })}
-                    className="w-full px-4 py-3 bg-red-50/50 border border-red-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-all font-medium text-red-950"
-                  />
-                </div>
-              </div>
 
-              <ShimmerButton
-                type="submit"
-                disabled={loading}
-                background="rgb(220, 38, 38)"
-                shimmerColor="#facc15"
-                className="w-full mt-6 py-4 rounded-xl font-black text-lg disabled:opacity-70 disabled:pointer-events-none"
-              >
-                {loading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Creating Account...
-                  </span>
-                ) : (
-                  <span className="flex items-center justify-center gap-2">
-                    Create Restaurant
-                    <ArrowRight className="w-5 h-5" />
-                  </span>
-                )}
-              </ShimmerButton>
-            </form>
+                {/* Email */}
+                <div>
+                  <label className="block text-sm font-bold text-red-950 mb-1.5">Email Address</label>
+                  <div className="relative">
+                    <Mail className="w-5 h-5 text-red-300 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input type="email" value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className="w-full pl-10 pr-4 py-3 bg-red-50/50 border border-red-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-all font-medium text-red-950"
+                      placeholder="restaurant@example.com" />
+                  </div>
+                </div>
+
+                {/* Access PIN */}
+                <div>
+                  <label className="block text-sm font-bold text-red-950 mb-1.5">
+                    Dashboard Access PIN <span className="text-red-500">*</span>
+                    <span className="ml-2 font-normal text-red-400 text-xs">(4 digits — you'll use this to log in)</span>
+                  </label>
+                  <div className="relative">
+                    <Lock className="w-5 h-5 text-red-300 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type={showPin ? "text" : "password"}
+                      required
+                      value={formData.access_pin}
+                      onChange={(e) => setFormData({ ...formData, access_pin: e.target.value.replace(/\D/g, "").slice(0, 4) })}
+                      maxLength={4}
+                      className="w-full pl-10 pr-12 py-3 bg-red-50/50 border border-red-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-all font-bold text-red-950 tracking-widest text-center text-lg"
+                      placeholder="• • • •"
+                    />
+                    <button type="button" onClick={() => setShowPin(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-red-300 hover:text-red-600 transition-colors">
+                      {showPin ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Address */}
+                <div>
+                  <label className="block text-sm font-bold text-red-950 mb-1.5">Address</label>
+                  <div className="relative">
+                    <MapPin className="w-5 h-5 text-red-300 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input type="text" value={formData.address}
+                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                      className="w-full pl-10 pr-4 py-3 bg-red-50/50 border border-red-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-all font-medium text-red-950"
+                      placeholder="City, Street..." />
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="block text-sm font-bold text-red-950 mb-1.5">Description</label>
+                  <div className="relative">
+                    <AlignLeft className="w-5 h-5 text-red-300 absolute left-3 top-3" />
+                    <textarea rows={3} value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      className="w-full pl-10 pr-4 py-3 bg-red-50/50 border border-red-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-all font-medium text-red-950"
+                      placeholder="Tell customers about your restaurant..." />
+                  </div>
+                </div>
+
+                {/* Image URLs */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-red-950 mb-1.5">Logo Image URL</label>
+                    <div className="relative">
+                      <ImageIcon className="w-5 h-5 text-red-300 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input type="url" value={formData.logo_url}
+                        onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
+                        className="w-full pl-10 pr-4 py-3 bg-red-50/50 border border-red-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-all font-medium text-red-950"
+                        placeholder="https://..." />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-red-950 mb-1.5">Cover Image URL</label>
+                    <div className="relative">
+                      <ImageIcon className="w-5 h-5 text-red-300 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input type="url" value={formData.cover_image_url}
+                        onChange={(e) => setFormData({ ...formData, cover_image_url: e.target.value })}
+                        className="w-full pl-10 pr-4 py-3 bg-red-50/50 border border-red-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-all font-medium text-red-950"
+                        placeholder="https://..." />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Fees */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-red-950 mb-1.5">Delivery Fee (DH)</label>
+                    <input type="number" min="0" value={formData.delivery_fee}
+                      onChange={(e) => setFormData({ ...formData, delivery_fee: e.target.value })}
+                      className="w-full px-4 py-3 bg-red-50/50 border border-red-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-all font-medium text-red-950" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-red-950 mb-1.5">Min. Order (DH)</label>
+                    <input type="number" min="0" value={formData.min_order_amount}
+                      onChange={(e) => setFormData({ ...formData, min_order_amount: e.target.value })}
+                      className="w-full px-4 py-3 bg-red-50/50 border border-red-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-all font-medium text-red-950" />
+                  </div>
+                </div>
+
+                <ShimmerButton type="submit" disabled={loading} background="rgb(220, 38, 38)" shimmerColor="#facc15"
+                  className="w-full mt-6 py-4 rounded-xl font-black text-lg disabled:opacity-70 disabled:pointer-events-none">
+                  {loading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-5 h-5 animate-spin" /> Creating Account...
+                    </span>
+                  ) : (
+                    <span className="flex items-center justify-center gap-2">
+                      Create Restaurant <ArrowRight className="w-5 h-5" />
+                    </span>
+                  )}
+                </ShimmerButton>
+              </form>
+            </div>
           </div>
-        </div>
         </BlurFade>
       </div>
     </div>

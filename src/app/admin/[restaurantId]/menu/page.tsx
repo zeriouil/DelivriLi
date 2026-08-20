@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { v4 as uuidv4 } from "uuid";
 import { Restaurant, Category, MenuItem } from "@/types";
-import { Store, Plus, Loader2, Save, Trash2, AlertTriangle } from "lucide-react";
+import { Store, Plus, Loader2, Save, Trash2, AlertTriangle, LogOut } from "lucide-react";
 import Link from "next/link";
 
 export default function AdminMenuPage({ params }: { params: { restaurantId: string } }) {
+  const router = useRouter();
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [items, setItems] = useState<MenuItem[]>([]);
@@ -41,9 +43,21 @@ export default function AdminMenuPage({ params }: { params: { restaurantId: stri
   };
 
   useEffect(() => {
+    // Auth guard — must have logged in via PIN
+    const isAuthed = sessionStorage.getItem(`auth_${params.restaurantId}`);
+    if (!isAuthed) {
+      router.replace(`/login/${params.restaurantId}`);
+      return;
+    }
     fetchData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.restaurantId]);
+
+  const handleSignOut = () => {
+    sessionStorage.removeItem(`auth_${params.restaurantId}`);
+    sessionStorage.removeItem("active_restaurant_id");
+    router.push(`/login/${params.restaurantId}`);
+  };
 
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,9 +121,17 @@ export default function AdminMenuPage({ params }: { params: { restaurantId: stri
           <Store className="w-6 h-6 text-indigo-600" />
           <h1 className="font-black text-xl text-slate-900">{restaurant.name} - Menu Admin</h1>
         </div>
-        <Link href={`/${restaurant.slug}`} className="text-sm font-bold text-indigo-600 hover:underline">
-          View Live Menu
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link href={`/${restaurant.slug}`} className="text-sm font-bold text-indigo-600 hover:underline">
+            View Live Menu
+          </Link>
+          <button
+            onClick={handleSignOut}
+            className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-red-600 transition-colors"
+          >
+            <LogOut className="w-4 h-4" /> Sign Out
+          </button>
+        </div>
       </header>
 
       <main className="max-w-5xl mx-auto p-6 space-y-10">

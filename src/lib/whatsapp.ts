@@ -63,3 +63,28 @@ export function generateWhatsAppOrderUrl(
   const cleanPhone = restaurant.phone_number.replace(/[^0-9]/g, '');
   return `https://wa.me/${cleanPhone}?text=${encodedText}`;
 }
+
+/**
+ * Generates a WhatsApp link to notify a restaurant that their account has been approved.
+ */
+export function generateApprovalWhatsAppUrl(
+  restaurant: { name: string; phone_number: string; access_pin?: string; id: string },
+  baseUrl: string
+): string {
+  const dashboardLink = `${baseUrl}/login/${restaurant.id}`;
+  const pin = restaurant.access_pin || '——';
+
+  let text = `✅ *Félicitations ! Votre restaurant a été approuvé !*\n\n`;
+  text += `Bonjour *${restaurant.name}*,\n\n`;
+  text += `Votre restaurant a été validé sur *DelivriLi* et est maintenant en ligne ! 🎉\n\n`;
+  text += `━━━━━━━━━━━━━━━━━━━━━\n`;
+  text += `🔗 *Accédez à votre tableau de bord :*\n${dashboardLink}\n\n`;
+  text += `🔑 *Votre code PIN :* \`${pin}\`\n`;
+  text += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
+  text += `Commencez à ajouter votre menu et vos clients pourront commander dès maintenant ! 🚀\n\n`;
+  text += `_— L'équipe DelivriLi_`;
+
+  const encodedText = encodeURIComponent(text);
+  const cleanPhone = restaurant.phone_number.replace(/[^0-9]/g, '');
+  return `https://wa.me/${cleanPhone}?text=${encodedText}`;
+}
