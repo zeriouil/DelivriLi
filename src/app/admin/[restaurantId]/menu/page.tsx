@@ -59,34 +59,9 @@ export default function AdminMenuPage({ params }: { params: { restaurantId: stri
   };
 
   useEffect(() => {
-    // Auth guard — must be logged in via Supabase Auth and own this restaurant
-    const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.replace("/login");
-        return;
-      }
-      // Verify this user owns the restaurant
-      const { data: rest } = await supabase
-        .from("restaurants")
-        .select("id")
-        .eq("id", params.restaurantId)
-        .eq("owner_id", user.id)
-        .single();
-      if (!rest) {
-        router.replace("/login");
-        return;
-      }
-      fetchData();
-    };
-    checkAuth();
+    fetchData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.restaurantId]);
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.push("/login");
-  };
 
   const handleMagicImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -289,23 +264,21 @@ export default function AdminMenuPage({ params }: { params: { restaurantId: stri
 
   return (
     <div className="min-h-screen bg-slate-50 font-[Outfit]">
-      <header className="bg-white border-b border-slate-100 px-6 h-16 flex items-center justify-between sticky top-0 z-30">
-        <div className="flex items-center gap-3">
-          <Store className="w-6 h-6 text-indigo-600" />
-          <h1 className="font-black text-xl text-slate-900">{restaurant.name} - Menu Admin</h1>
+      <div className="p-6">
+        {/* Magic Import */}
+        <div className="mb-8 p-6 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl text-white shadow-xl flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-black mb-1 flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-yellow-300" /> Magic Import
+            </h2>
+            <p className="text-indigo-100 text-sm">Upload a picture of your physical menu, and AI will digitize it instantly.</p>
+          </div>
+          <label className="bg-white text-indigo-600 px-6 py-3 rounded-xl font-bold cursor-pointer hover:scale-105 transition shadow-lg flex items-center gap-2">
+            {isImporting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
+            {isImporting ? "Processing..." : "Upload Menu Image"}
+            <input type="file" accept="image/*" className="hidden" onChange={handleMagicImport} disabled={isImporting} />
+          </label>
         </div>
-        <div className="flex items-center gap-3">
-          <Link href={`/${restaurant.slug}`} className="text-sm font-bold text-indigo-600 hover:underline">
-            View Live Menu
-          </Link>
-          <button
-            onClick={handleSignOut}
-            className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-red-600 transition-colors"
-          >
-            <LogOut className="w-4 h-4" /> Sign Out
-          </button>
-        </div>
-      </header>
 
       <main className="max-w-5xl mx-auto p-6 space-y-10">
         {!restaurant.is_active && (

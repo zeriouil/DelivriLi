@@ -45,8 +45,8 @@ export default function LoginPage() {
         throw new Error("No restaurant found for this account. Please sign up first.");
       }
 
-      // Redirect to admin dashboard
-      router.push(`/admin/${restaurant.id}/menu`);
+      // Redirect to admin dashboard (Live Orders)
+      router.push(`/admin/${restaurant.id}/orders`);
     } catch (err: any) {
       setError(err.message || "Login failed. Please try again.");
     } finally {

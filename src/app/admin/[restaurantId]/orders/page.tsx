@@ -6,25 +6,29 @@ import { Order, OrderStatus } from "@/types";
 import { OrderCard } from "@/components/admin/OrderCard";
 import { ShoppingBag, DollarSign, Clock, TrendingUp, Plus, RefreshCw } from "lucide-react";
 
-export default function AdminDashboard() {
+export default function RestaurantOrdersPage({ params }: { params: { restaurantId: string } }) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-
-  const RESTAURANT_ID = "00000000-0000-0000-0000-000000000001";
 
   useEffect(() => {
     fetchOrders();
 
     const channel = supabase
-      .channel('public:orders')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+      .channel(`orders-${params.restaurantId}`)
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'orders',
+        filter: `restaurant_id=eq.${params.restaurantId}`
+      }, () => {
         fetchOrders();
       })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.restaurantId]);
 
   const fetchOrders = async () => {
     let dbOrders: Order[] = [];
@@ -32,6 +36,7 @@ export default function AdminDashboard() {
       const { data, error } = await supabase
         .from('orders')
         .select('*')
+        .eq('restaurant_id', params.restaurantId)
         .order('created_at', { ascending: false });
 
       if (!error && data) dbOrders = data;
@@ -43,6 +48,8 @@ export default function AdminDashboard() {
     let localOrders: Order[] = [];
     try {
       localOrders = JSON.parse(localStorage.getItem('local_orders_list') || '[]');
+      // Filter local orders for this restaurant only
+      localOrders = localOrders.filter(o => o.restaurant_id === params.restaurantId);
     } catch {}
 
     const map = new Map<string, Order>();
@@ -91,7 +98,7 @@ export default function AdminDashboard() {
       }
     } catch {}
 
-    // Update Supabase (includes estimated_prep_minutes + ready_at if provided)
+    // Update Supabase
     try {
       await supabase.from('orders').update(patch).eq('id', orderId);
     } catch (error) {
@@ -103,7 +110,7 @@ export default function AdminDashboard() {
     const newId = `ord-${Date.now()}`;
     const newOrder: Order = {
       id: newId,
-      restaurant_id: RESTAURANT_ID,
+      restaurant_id: params.restaurantId,
       order_number: Math.floor(1000 + Math.random() * 9000),
       customer_name: "Test Customer",
       customer_phone: "212600000000",
@@ -133,7 +140,7 @@ export default function AdminDashboard() {
     try {
       await supabase.from('orders').insert({
         id: newOrder.id,
-        restaurant_id: RESTAURANT_ID,
+        restaurant_id: newOrder.restaurant_id,
         customer_name: newOrder.customer_name,
         customer_phone: newOrder.customer_phone,
         order_type: newOrder.order_type,
@@ -176,9 +183,22 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+      {/* Top Header */}
+      <header className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="font-black text-slate-900 text-2xl">Live Orders</h1>
+          <p className="text-slate-500 text-sm mt-1">Real-time order management dashboard</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            Live
+          </span>
+        </div>
+      </header>
 
-      {/* ── Stats Bar ──────────────────────────────── */}
+      {/* Stats Bar */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           {
@@ -210,7 +230,7 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {/* ── Actions ────────────────────────────────── */}
+      {/* Actions */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {COLUMNS.map(col => (
@@ -241,7 +261,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* ── Kanban ─────────────────────────────────── */}
+      {/* Kanban */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {COLUMNS.map(col => {
           const colOrders = getOrdersByStatus(col.statuses);
@@ -275,7 +295,7 @@ export default function AdminDashboard() {
         })}
       </div>
 
-      {/* ── Picked Up / Out for Delivery Section ───── */}
+      {/* Picked Up / Out for Delivery Section */}
       {getOrdersByStatus(['out_for_delivery', 'completed']).length > 0 && (
         <div className="mt-8 border-t border-slate-200 pt-6">
           <div className="flex items-center justify-between mb-3">
