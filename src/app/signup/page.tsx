@@ -19,14 +19,16 @@ export default function SignupPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showPin, setShowPin] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
     slug: "",
     email: "",
+    password: "",
+    confirmPassword: "",
     phone_number: "",
-    access_pin: "",
     address: "",
     description: "",
     logo_url: "",
@@ -50,11 +52,14 @@ export default function SignupPage() {
     setError(null);
 
     try {
-      if (!formData.name || !formData.slug || !formData.phone_number) {
+      if (!formData.name || !formData.slug || !formData.phone_number || !formData.email) {
         throw new Error("Please fill in all required fields.");
       }
-      if (formData.access_pin.length !== 4 || !/^\d{4}$/.test(formData.access_pin)) {
-        throw new Error("Access PIN must be exactly 4 digits.");
+      if (formData.password.length < 6) {
+        throw new Error("Password must be at least 6 characters.");
+      }
+      if (formData.password !== formData.confirmPassword) {
+        throw new Error("Passwords do not match.");
       }
 
       // Check if slug already exists
@@ -68,14 +73,24 @@ export default function SignupPage() {
         throw new Error("This restaurant URL is already taken. Please choose another name or modify the URL.");
       }
 
+      // Create Supabase Auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (authError) throw new Error(authError.message);
+      if (!authData.user) throw new Error("Failed to create account. Please try again.");
+
       const restaurantId = uuidv4();
 
+      // Insert restaurant row linked to auth user
       const { error: insertError } = await supabase.from("restaurants").insert({
         id: restaurantId,
         slug: formData.slug,
         name: formData.name,
         email: formData.email,
-        access_pin: formData.access_pin,
+        owner_id: authData.user.id,
         description: formData.description,
         logo_url: formData.logo_url,
         cover_image_url: formData.cover_image_url,
@@ -172,36 +187,52 @@ export default function SignupPage() {
 
                 {/* Email */}
                 <div>
-                  <label className="block text-sm font-bold text-red-950 mb-1.5">Email Address</label>
+                  <label className="block text-sm font-bold text-red-950 mb-1.5">Email Address <span className="text-red-500">*</span></label>
                   <div className="relative">
                     <Mail className="w-5 h-5 text-red-300 absolute left-3 top-1/2 -translate-y-1/2" />
-                    <input type="email" value={formData.email}
+                    <input type="email" required value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       className="w-full pl-10 pr-4 py-3 bg-red-50/50 border border-red-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-all font-medium text-red-950"
                       placeholder="restaurant@example.com" />
                   </div>
                 </div>
 
-                {/* Access PIN */}
-                <div>
-                  <label className="block text-sm font-bold text-red-950 mb-1.5">
-                    Dashboard Access PIN <span className="text-red-500">*</span>
-                    <span className="ml-2 font-normal text-red-400 text-xs">(4 digits — you'll use this to log in)</span>
-                  </label>
-                  <div className="relative">
-                    <Lock className="w-5 h-5 text-red-300 absolute left-3 top-1/2 -translate-y-1/2" />
-                    <input
-                      type={showPin ? "text" : "password"}
-                      required
-                      value={formData.access_pin}
-                      onChange={(e) => setFormData({ ...formData, access_pin: e.target.value.replace(/\D/g, "").slice(0, 4) })}
-                      maxLength={4}
-                      className="w-full pl-10 pr-12 py-3 bg-red-50/50 border border-red-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-all font-bold text-red-950 tracking-widest text-center text-lg"
-                      placeholder="• • • •"
-                    />
-                    <button type="button" onClick={() => setShowPin(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-red-300 hover:text-red-600 transition-colors">
-                      {showPin ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
+                {/* Password */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-red-950 mb-1.5">Password <span className="text-red-500">*</span></label>
+                    <div className="relative">
+                      <Lock className="w-5 h-5 text-red-300 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        required
+                        minLength={6}
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        className="w-full pl-10 pr-10 py-3 bg-red-50/50 border border-red-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-all font-medium text-red-950"
+                        placeholder="Min. 6 chars"
+                      />
+                      <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-red-300 hover:text-red-600 transition-colors">
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-red-950 mb-1.5">Confirm Password <span className="text-red-500">*</span></label>
+                    <div className="relative">
+                      <Lock className="w-5 h-5 text-red-300 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type={showConfirm ? "text" : "password"}
+                        required
+                        value={formData.confirmPassword}
+                        onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                        className="w-full pl-10 pr-10 py-3 bg-red-50/50 border border-red-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-all font-medium text-red-950"
+                        placeholder="Repeat password"
+                      />
+                      <button type="button" onClick={() => setShowConfirm(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-red-300 hover:text-red-600 transition-colors">
+                        {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -281,6 +312,11 @@ export default function SignupPage() {
                     </span>
                   )}
                 </ShimmerButton>
+
+                <p className="text-center text-sm text-red-400 font-medium">
+                  Already have an account?{" "}
+                  <Link href="/login" className="text-red-600 font-bold hover:underline">Sign in</Link>
+                </p>
               </form>
             </div>
           </div>

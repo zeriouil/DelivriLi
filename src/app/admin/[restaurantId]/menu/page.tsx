@@ -59,20 +59,33 @@ export default function AdminMenuPage({ params }: { params: { restaurantId: stri
   };
 
   useEffect(() => {
-    // Auth guard — must have logged in via PIN
-    const isAuthed = sessionStorage.getItem(`auth_${params.restaurantId}`);
-    if (!isAuthed) {
-      router.replace(`/login/${params.restaurantId}`);
-      return;
-    }
-    fetchData();
+    // Auth guard — must be logged in via Supabase Auth and own this restaurant
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.replace("/login");
+        return;
+      }
+      // Verify this user owns the restaurant
+      const { data: rest } = await supabase
+        .from("restaurants")
+        .select("id")
+        .eq("id", params.restaurantId)
+        .eq("owner_id", user.id)
+        .single();
+      if (!rest) {
+        router.replace("/login");
+        return;
+      }
+      fetchData();
+    };
+    checkAuth();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.restaurantId]);
 
-  const handleSignOut = () => {
-    sessionStorage.removeItem(`auth_${params.restaurantId}`);
-    sessionStorage.removeItem("active_restaurant_id");
-    router.push(`/login/${params.restaurantId}`);
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
   };
 
   const handleMagicImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
