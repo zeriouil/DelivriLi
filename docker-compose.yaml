@@ -8,6 +8,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        # Pass public env vars at build time so Next.js bakes them into the client bundle
+        - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+        - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
     ports:
       - "3000:3000"
     env_file:
