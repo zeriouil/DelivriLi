@@ -208,16 +208,35 @@ export default function AdminMenuPage({ params }: { params: { restaurantId: stri
       const ext = file.name.split(".").pop();
       const path = `${params.restaurantId}/${editingItem.id}.${ext}`;
 
-      const { error: uploadError } = await supabase.storage
+      console.log("Uploading to path:", path);
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from("menu-images")
         .upload(path, file, { upsert: true });
 
-      if (uploadError) throw uploadError;
+      console.log("Upload result:", uploadData, uploadError);
+
+      if (uploadError) throw new Error(JSON.stringify(uploadError));
 
       const { data: urlData } = supabase.storage.from("menu-images").getPublicUrl(path);
-      setEditForm((f) => ({ ...f, image_url: urlData.publicUrl }));
+      const publicUrl = urlData.publicUrl;
+      console.log("Public URL:", publicUrl);
+
+      // Update state
+      setEditForm((f) => ({ ...f, image_url: publicUrl }));
+
+      // Auto-save image_url to DB immediately
+      const { error: dbError } = await supabase
+        .from("menu_items")
+        .update({ image_url: publicUrl })
+        .eq("id", editingItem.id);
+
+      if (dbError) console.error("DB save error:", dbError);
+      else await fetchData();
+
     } catch (err: any) {
-      alert("Image upload failed: " + err.message);
+      console.error("Upload error full:", err);
+      alert("Image upload failed: " + (err.message || JSON.stringify(err)));
     } finally {
       setUploadingImage(false);
       if (imageUploadRef.current) imageUploadRef.current.value = "";
