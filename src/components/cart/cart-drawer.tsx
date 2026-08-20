@@ -513,6 +513,7 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
       open={showLocationPicker}
       onConfirm={(loc) => {
         setDropoffGeo(loc);
+        setCustomer(prev => ({ ...prev, deliveryAddress: loc.address }));
         setShowLocationPicker(false);
       }}
       onClose={() => setShowLocationPicker(false)}

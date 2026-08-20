@@ -223,7 +223,18 @@ export default function RestaurantSettingsPage({ params }: { params: { restauran
                     <MapComponent 
                       initialLat={formData.latitude || 33.5731} 
                       initialLng={formData.longitude || -7.5898} 
-                      onChange={(lat: number, lng: number) => setFormData(f => ({ ...f, latitude: lat, longitude: lng }))} 
+                      onChange={async (lat: number, lng: number) => {
+                        setFormData(f => ({ ...f, latitude: lat, longitude: lng }));
+                        try {
+                          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+                          const data = await res.json();
+                          if (data && data.display_name) {
+                            setFormData(f => ({ ...f, address: data.display_name }));
+                          }
+                        } catch (err) {
+                          console.error(err);
+                        }
+                      }} 
                     />
                     <p className="text-xs text-slate-500 mt-2">Click anywhere on the map to pin your restaurant's exact location.</p>
                   </div>
