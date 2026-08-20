@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { v4 as uuidv4 } from "uuid";
 import { Restaurant, Category, MenuItem } from "@/types";
-import { Store, Plus, Loader2, Save, Trash2, AlertTriangle, LogOut, Wand2, ImagePlus, X, Pencil } from "lucide-react";
+import { Store, Plus, Loader2, Save, Trash2, AlertTriangle, LogOut, Wand2, ImagePlus, X, Pencil, Sparkles, Upload } from "lucide-react";
 import Link from "next/link";
 
 export default function AdminMenuPage({ params }: { params: { restaurantId: string } }) {
