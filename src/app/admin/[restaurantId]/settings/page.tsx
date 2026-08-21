@@ -19,8 +19,6 @@ export default function RestaurantSettingsPage({ params }: { params: { restauran
     longitude: 0,
     logo_url: "",
     cover_image_url: "",
-    delivery_fee: 0,
-    delivery_fee_per_km: 0,
     min_order_amount: 0,
   });
 
@@ -78,8 +76,6 @@ export default function RestaurantSettingsPage({ params }: { params: { restauran
           longitude: data.longitude || -7.5898,
           logo_url: data.logo_url || "",
           cover_image_url: data.cover_image_url || "",
-          delivery_fee: data.delivery_fee || 0,
-          delivery_fee_per_km: data.delivery_fee_per_km || 0,
           min_order_amount: data.min_order_amount || 0,
         });
       }
@@ -106,8 +102,6 @@ export default function RestaurantSettingsPage({ params }: { params: { restauran
           longitude: formData.longitude,
           logo_url: formData.logo_url,
           cover_image_url: formData.cover_image_url,
-          delivery_fee: parseFloat(formData.delivery_fee.toString()),
-          delivery_fee_per_km: parseFloat(formData.delivery_fee_per_km.toString()),
           min_order_amount: parseFloat(formData.min_order_amount.toString()),
         })
         .eq("id", params.restaurantId);
@@ -298,29 +292,7 @@ export default function RestaurantSettingsPage({ params }: { params: { restauran
               <DollarSign className="w-5 h-5 text-emerald-500" />
               Delivery & Fees
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1.5">Base Delivery Fee (DH)</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={formData.delivery_fee}
-                  onChange={(e) => setFormData({ ...formData, delivery_fee: parseFloat(e.target.value) || 0 })}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-slate-900"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1.5">Fee per Km (DH)</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={formData.delivery_fee_per_km}
-                  onChange={(e) => setFormData({ ...formData, delivery_fee_per_km: parseFloat(e.target.value) || 0 })}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-slate-900"
-                />
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1.5">Minimum Order (DH)</label>
                 <input

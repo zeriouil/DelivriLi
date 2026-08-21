@@ -70,6 +70,20 @@ export default function SuperAdminPage() {
     }
   };
 
+  const updateFee = async (id: string, field: 'delivery_fee' | 'delivery_fee_per_km', value: number) => {
+    const { error } = await supabase
+      .from("restaurants")
+      .update({ [field]: value })
+      .eq("id", id);
+    
+    if (error) {
+      alert("Error saving fee setting");
+    } else {
+      // Silently update local state to reflect the change
+      setRestaurants(prev => prev.map(r => r.id === id ? { ...r, [field]: value } : r));
+    }
+  };
+
   const copyLoginLink = (id: string) => {
     navigator.clipboard.writeText(`${BASE_URL}/login/${id}`);
     setCopiedId(id);
@@ -141,6 +155,7 @@ export default function SuperAdminPage() {
                     <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Restaurant</th>
                     <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Contact</th>
                     <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">PIN</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Delivery Fees</th>
                     <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
                     <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Actions</th>
                   </tr>
@@ -171,6 +186,28 @@ export default function SuperAdminPage() {
                         <span className="font-mono font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded-lg text-sm tracking-widest">
                           {restaurant.access_pin ?? <span className="text-slate-400 italic text-xs font-sans">not set</span>}
                         </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col gap-2 w-32">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold text-slate-400 w-8">BASE</span>
+                            <input 
+                              type="number" 
+                              defaultValue={restaurant.delivery_fee} 
+                              onBlur={(e) => updateFee(restaurant.id, 'delivery_fee', parseFloat(e.target.value) || 0)}
+                              className="w-full text-xs px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-bold text-slate-700"
+                            />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold text-slate-400 w-8">/KM</span>
+                            <input 
+                              type="number" 
+                              defaultValue={restaurant.delivery_fee_per_km} 
+                              onBlur={(e) => updateFee(restaurant.id, 'delivery_fee_per_km', parseFloat(e.target.value) || 0)}
+                              className="w-full text-xs px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-bold text-slate-700"
+                            />
+                          </div>
+                        </div>
                       </td>
                       <td className="px-6 py-4">
                         {restaurant.is_active ? (
