@@ -92,10 +92,25 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
   let calculatedDeliveryFee = 0;
   let distanceKm = 0;
   if (customer.orderType === 'delivery') {
-    calculatedDeliveryFee = restaurant.delivery_fee || 0;
-    if (dropoffGeo && restaurant.latitude && restaurant.longitude && restaurant.delivery_fee_per_km) {
+    // Advanced Pricing Model
+    const BASE_FEE = restaurant.delivery_fee || 8;
+    const PER_KM_RATE = restaurant.delivery_fee_per_km || 2;
+    const INCLUDED_KM = 2;
+    const MIN_FEE = 10;
+    const MAX_FEE = 25;
+
+    // Default to min fee if no address is set yet
+    calculatedDeliveryFee = MIN_FEE;
+
+    if (dropoffGeo && restaurant.latitude && restaurant.longitude) {
       distanceKm = getDistanceKm(restaurant.latitude, restaurant.longitude, dropoffGeo.lat, dropoffGeo.lng);
-      calculatedDeliveryFee += (distanceKm * restaurant.delivery_fee_per_km);
+      
+      let rawFee = BASE_FEE;
+      if (distanceKm > INCLUDED_KM) {
+        rawFee += (distanceKm - INCLUDED_KM) * PER_KM_RATE;
+      }
+      
+      calculatedDeliveryFee = Math.max(MIN_FEE, Math.min(MAX_FEE, rawFee));
     }
   }
 
