@@ -79,7 +79,27 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
 
   if (!isOpen) return null;
 
-  const deliveryFee = customer.orderType === 'delivery' ? restaurant.delivery_fee : 0;
+  const getDistanceKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+              Math.sin(dLon/2) * Math.sin(dLon/2); 
+    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+  };
+
+  let calculatedDeliveryFee = 0;
+  let distanceKm = 0;
+  if (customer.orderType === 'delivery') {
+    calculatedDeliveryFee = restaurant.delivery_fee || 0;
+    if (dropoffGeo && restaurant.latitude && restaurant.longitude && restaurant.delivery_fee_per_km) {
+      distanceKm = getDistanceKm(restaurant.latitude, restaurant.longitude, dropoffGeo.lat, dropoffGeo.lng);
+      calculatedDeliveryFee += (distanceKm * restaurant.delivery_fee_per_km);
+    }
+  }
+
+  const deliveryFee = calculatedDeliveryFee;
   const promoDiscount = appliedPromo ? appliedPromo.discount : 0;
   const grandTotal = Math.max(0, subtotal + deliveryFee - promoDiscount);
 
@@ -470,7 +490,10 @@ export function CartDrawer({ restaurant, isOpen, onClose }: CartDrawerProps) {
               </div>
               {customer.orderType === 'delivery' && (
                 <div className="flex justify-between">
-                  <span>Delivery Fee</span>
+                  <span>
+                    Delivery Fee 
+                    {distanceKm > 0 && <span className="text-[10px] text-red-900/40 ml-1">({distanceKm.toFixed(1)}km)</span>}
+                  </span>
                   <span>{subtotal >= FREE_DELIVERY_THRESHOLD ? <span className="text-green-600 uppercase tracking-wider">Free</span> : <span className="text-red-950">{deliveryFee.toFixed(2)} {restaurant.currency_symbol}</span>}</span>
                 </div>
               )}

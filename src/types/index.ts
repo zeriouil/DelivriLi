@@ -14,6 +14,7 @@ export interface Restaurant {
   latitude?: number;
   longitude?: number;
   delivery_fee: number;
+  delivery_fee_per_km?: number;
   min_order_amount: number;
   is_active: boolean;
   created_at?: string;
