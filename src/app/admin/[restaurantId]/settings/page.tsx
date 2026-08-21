@@ -143,7 +143,7 @@ export default function RestaurantSettingsPage({ params }: { params: { restauran
           {/* General Info */}
           <div>
             <h3 className="text-lg font-black text-slate-900 mb-4 flex items-center gap-2">
-              <Store className="w-5 h-5 text-indigo-500" />
+              <Store className="w-5 h-5 text-[#32B260]" />
               General Information
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -154,7 +154,7 @@ export default function RestaurantSettingsPage({ params }: { params: { restauran
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-slate-900"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#32B260]/20 focus:border-[#32B260] transition-all font-medium text-slate-900"
                 />
               </div>
               <div>
@@ -166,7 +166,7 @@ export default function RestaurantSettingsPage({ params }: { params: { restauran
                     required
                     value={formData.phone_number}
                     onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-slate-900"
+                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#32B260]/20 focus:border-[#32B260] transition-all font-medium text-slate-900"
                   />
                 </div>
               </div>
@@ -182,7 +182,7 @@ export default function RestaurantSettingsPage({ params }: { params: { restauran
                       setFormData({ ...formData, address: e.target.value });
                       setShowSuggestions(true);
                     }}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-slate-900"
+                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#32B260]/20 focus:border-[#32B260] transition-all font-medium text-slate-900"
                     placeholder="Enter street address or city"
                   />
                   {isSearching && (
@@ -257,7 +257,7 @@ export default function RestaurantSettingsPage({ params }: { params: { restauran
           {/* Media */}
           <div>
             <h3 className="text-lg font-black text-slate-900 mb-4 flex items-center gap-2">
-              <ImageIcon className="w-5 h-5 text-fuchsia-500" />
+              <ImageIcon className="w-5 h-5 text-[#32B260]" />
               Branding & Media
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -267,7 +267,7 @@ export default function RestaurantSettingsPage({ params }: { params: { restauran
                   type="url"
                   value={formData.logo_url}
                   onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-slate-900"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#32B260]/20 focus:border-[#32B260] transition-all font-medium text-slate-900"
                   placeholder="https://..."
                 />
               </div>
@@ -277,7 +277,7 @@ export default function RestaurantSettingsPage({ params }: { params: { restauran
                   type="url"
                   value={formData.cover_image_url}
                   onChange={(e) => setFormData({ ...formData, cover_image_url: e.target.value })}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-slate-900"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#32B260]/20 focus:border-[#32B260] transition-all font-medium text-slate-900"
                   placeholder="https://..."
                 />
               </div>
@@ -289,7 +289,7 @@ export default function RestaurantSettingsPage({ params }: { params: { restauran
           {/* Delivery & Fees */}
           <div>
             <h3 className="text-lg font-black text-slate-900 mb-4 flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-emerald-500" />
+              <DollarSign className="w-5 h-5 text-[#32B260]" />
               Delivery & Fees
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -301,7 +301,7 @@ export default function RestaurantSettingsPage({ params }: { params: { restauran
                   step="0.01"
                   value={formData.min_order_amount}
                   onChange={(e) => setFormData({ ...formData, min_order_amount: parseFloat(e.target.value) || 0 })}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-slate-900"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#32B260]/20 focus:border-[#32B260] transition-all font-medium text-slate-900"
                 />
               </div>
             </div>
@@ -312,7 +312,7 @@ export default function RestaurantSettingsPage({ params }: { params: { restauran
           <ShimmerButton
             type="submit"
             disabled={saving}
-            background="rgb(79, 70, 229)"
+            background="#32B260"
             shimmerColor="#ffffff"
             className="px-8 py-3 rounded-xl font-bold disabled:opacity-50"
           >

@@ -177,9 +177,9 @@ export default function RestaurantOrdersPage({ params }: { params: { restaurantI
   }
 
   const COLUMNS: { label: string; statuses: OrderStatus[]; color: string; dot: string; bg: string }[] = [
-    { label: 'New Orders',  statuses: ['pending'],               color: 'text-amber-700',   dot: 'bg-amber-500',   bg: 'from-amber-50 to-orange-50 border-amber-200' },
-    { label: 'Preparing',   statuses: ['confirmed', 'preparing'], color: 'text-indigo-700',  dot: 'bg-indigo-500',  bg: 'from-indigo-50 to-blue-50 border-indigo-200' },
-    { label: 'Ready',       statuses: ['ready'],                 color: 'text-emerald-700', dot: 'bg-emerald-500', bg: 'from-emerald-50 to-teal-50 border-emerald-200' },
+    { label: 'New Orders',  statuses: ['pending'],               color: 'text-slate-900',   dot: 'bg-amber-500',   bg: 'bg-white border-slate-200 shadow-sm' },
+    { label: 'Preparing',   statuses: ['confirmed', 'preparing'], color: 'text-slate-900',  dot: 'bg-blue-500',  bg: 'bg-white border-slate-200 shadow-sm' },
+    { label: 'Ready',       statuses: ['ready'],                 color: 'text-slate-900', dot: 'bg-[#32B260]', bg: 'bg-white border-[#32B260]/30 shadow-sm ring-1 ring-[#32B260]/10' },
   ];
 
   return (
@@ -191,8 +191,8 @@ export default function RestaurantOrdersPage({ params }: { params: { restaurantI
           <p className="text-slate-500 text-sm mt-1">Real-time order management dashboard</p>
         </div>
         <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="flex items-center gap-1.5 text-xs font-bold text-[#32B260] bg-[#EAF6ED] border border-[#32B260]/20 rounded-full px-3 py-1">
+            <span className="w-2 h-2 rounded-full bg-[#32B260] animate-pulse" />
             Live
           </span>
         </div>
@@ -203,19 +203,19 @@ export default function RestaurantOrdersPage({ params }: { params: { restaurantI
         {[
           {
             label: 'Total Orders', value: todayOrders,
-            icon: ShoppingBag, color: 'bg-indigo-500', light: 'bg-indigo-50 text-indigo-600',
+            icon: ShoppingBag, color: 'bg-[#32B260]', light: 'bg-[#EAF6ED] text-[#32B260]',
           },
           {
             label: 'Revenue', value: `${todayRevenue.toFixed(0)} DH`,
-            icon: DollarSign, color: 'bg-emerald-500', light: 'bg-emerald-50 text-emerald-600',
+            icon: DollarSign, color: 'bg-slate-900', light: 'bg-slate-100 text-slate-900',
           },
           {
             label: 'Avg. Order', value: `${avgOrder.toFixed(0)} DH`,
-            icon: TrendingUp, color: 'bg-amber-500', light: 'bg-amber-50 text-amber-600',
+            icon: TrendingUp, color: 'bg-blue-500', light: 'bg-blue-50 text-blue-600',
           },
           {
             label: 'Active Now', value: activeOrders,
-            icon: Clock, color: 'bg-rose-500', light: 'bg-rose-50 text-rose-600',
+            icon: Clock, color: 'bg-amber-500', light: 'bg-amber-50 text-amber-600',
           },
         ].map((stat, i) => (
           <div key={i} className="bg-white rounded-2xl border border-slate-200 p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow animate-slide-up" style={{ animationDelay: `${i * 0.08}s` }}>
@@ -253,7 +253,7 @@ export default function RestaurantOrdersPage({ params }: { params: { restaurantI
           <button
             id="create-test-order"
             onClick={createTestOrder}
-            className="flex items-center gap-2 px-4 py-2 text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-xl transition"
+            className="flex items-center gap-2 px-4 py-2 text-xs font-bold bg-[#32B260] hover:bg-[#2CA054] text-white rounded-xl transition shadow-sm"
           >
             <Plus className="w-3.5 h-3.5" />
             Test Order
@@ -268,12 +268,12 @@ export default function RestaurantOrdersPage({ params }: { params: { restaurantI
           return (
             <div key={col.label} className="flex flex-col gap-3">
               {/* Column header */}
-              <div className={`flex items-center justify-between px-4 py-3 rounded-2xl border bg-gradient-to-r ${col.bg}`}>
+              <div className={`flex items-center justify-between px-4 py-3 rounded-2xl border ${col.bg}`}>
                 <div className="flex items-center gap-2">
                   <span className={`w-2.5 h-2.5 rounded-full ${col.dot} ${col.statuses.includes('pending') ? 'animate-pulse' : ''}`} />
                   <h2 className={`font-black text-sm ${col.color}`}>{col.label}</h2>
                 </div>
-                <span className={`text-xs font-black px-2.5 py-1 rounded-full bg-white/60 ${col.color}`}>
+                <span className={`text-xs font-black px-2.5 py-1 rounded-full bg-slate-100 text-slate-600`}>
                   {colOrders.length}
                 </span>
               </div>

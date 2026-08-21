@@ -269,7 +269,7 @@ export default function AdminMenuPage({ params }: { params: { restaurantId: stri
   };
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-indigo-600" /></div>;
+    return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-[#32B260]" /></div>;
   }
 
   if (!restaurant) {
@@ -280,14 +280,14 @@ export default function AdminMenuPage({ params }: { params: { restaurantId: stri
     <div className="min-h-screen bg-slate-50 font-[Outfit]">
       <div className="p-6">
         {/* Magic Import */}
-        <div className="mb-8 p-6 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl text-white shadow-xl flex items-center justify-between">
+        <div className="mb-8 p-6 bg-[#EAF6ED] border border-[#32B260]/20 rounded-3xl shadow-sm flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-black mb-1 flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-yellow-300" /> Magic Import
+            <h2 className="text-xl font-black mb-1 flex items-center gap-2 text-slate-900">
+              <Sparkles className="w-5 h-5 text-[#32B260]" /> Magic Import
             </h2>
-            <p className="text-indigo-100 text-sm">Upload a picture of your physical menu, and AI will digitize it instantly.</p>
+            <p className="text-slate-600 text-sm">Upload a picture of your physical menu, and AI will digitize it instantly.</p>
           </div>
-          <label className="bg-white text-indigo-600 px-6 py-3 rounded-xl font-bold cursor-pointer hover:scale-105 transition shadow-lg flex items-center gap-2">
+          <label className="bg-[#32B260] text-white px-6 py-3 rounded-xl font-bold cursor-pointer hover:bg-[#2CA054] transition shadow-sm flex items-center gap-2">
             {isImporting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
             {isImporting ? "Processing..." : "Upload Menu Image"}
             <input type="file" accept="image/*" className="hidden" onChange={handleMagicImport} disabled={isImporting} />
@@ -327,9 +327,9 @@ export default function AdminMenuPage({ params }: { params: { restaurantId: stri
               placeholder="New Category Name"
               value={newCatName}
               onChange={(e) => setNewCatName(e.target.value)}
-              className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:border-indigo-600 font-medium"
+              className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:border-[#32B260] font-medium"
             />
-            <button type="submit" className="bg-indigo-600 text-white px-5 rounded-xl font-bold hover:bg-indigo-700 flex items-center gap-2">
+            <button type="submit" className="bg-[#32B260] text-white px-5 rounded-xl font-bold hover:bg-[#2CA054] flex items-center gap-2 transition-colors">
               <Plus className="w-4 h-4" /> Add
             </button>
           </form>
@@ -340,12 +340,12 @@ export default function AdminMenuPage({ params }: { params: { restaurantId: stri
           {/* Overlay when importing */}
           {isImporting && (
             <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center rounded-3xl">
-              <div className="w-16 h-16 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center mb-4">
-                <Wand2 className="w-8 h-8 text-indigo-600 animate-pulse" />
+              <div className="w-16 h-16 rounded-2xl bg-[#EAF6ED] border border-[#32B260]/20 flex items-center justify-center mb-4">
+                <Wand2 className="w-8 h-8 text-[#32B260] animate-pulse" />
               </div>
-              <h3 className="text-xl font-black text-indigo-900 mb-2">AI is reading your menu...</h3>
-              <p className="text-indigo-600/70 text-sm font-medium">This usually takes about 5 to 10 seconds.</p>
-              <Loader2 className="w-6 h-6 animate-spin text-indigo-600 mt-6" />
+              <h3 className="text-xl font-black text-slate-900 mb-2">AI is reading your menu...</h3>
+              <p className="text-slate-600 text-sm font-medium">This usually takes about 5 to 10 seconds.</p>
+              <Loader2 className="w-6 h-6 animate-spin text-[#32B260] mt-6" />
             </div>
           )}
 
@@ -363,13 +363,13 @@ export default function AdminMenuPage({ params }: { params: { restaurantId: stri
               <button 
                 onClick={() => fileInputRef.current?.click()} 
                 disabled={isImporting}
-                className="bg-indigo-50 text-indigo-600 border border-indigo-200 px-4 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-indigo-100 transition-colors text-sm"
+                className="bg-[#EAF6ED] text-[#32B260] border border-[#32B260]/20 px-4 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-[#D5EEDD] transition-colors text-sm"
               >
                 <Wand2 className="w-4 h-4" /> Magic Import
               </button>
 
               {!showItemForm && categories.length > 0 && (
-                <button onClick={() => setShowItemForm(true)} className="bg-slate-900 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-black transition-colors text-sm">
+                <button onClick={() => setShowItemForm(true)} className="bg-[#32B260] text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-[#2CA054] transition-colors text-sm shadow-sm">
                   <Plus className="w-4 h-4" /> Add Item
                 </button>
               )}
@@ -410,7 +410,7 @@ export default function AdminMenuPage({ params }: { params: { restaurantId: stri
               </div>
               <div className="flex items-center gap-3 justify-end pt-2">
                 <button type="button" onClick={() => setShowItemForm(false)} className="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-800">Cancel</button>
-                <button type="submit" className="px-5 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-indigo-700">
+                <button type="submit" className="px-5 py-2 bg-[#32B260] text-white rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-[#2CA054] transition-colors">
                   <Save className="w-4 h-4" /> Save Item
                 </button>
               </div>
@@ -457,7 +457,7 @@ export default function AdminMenuPage({ params }: { params: { restaurantId: stri
                               <button onClick={() => handleToggleVisibility(item)} className={`${item.is_available ? 'text-slate-400 hover:text-slate-600' : 'text-amber-500 hover:text-amber-600'} transition-colors`} title={item.is_available ? "Hide dish" : "Show dish"}>
                                 {item.is_available ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                               </button>
-                              <button onClick={() => openEditModal(item)} className="text-slate-300 hover:text-indigo-500 transition-colors" title="Edit">
+                              <button onClick={() => openEditModal(item)} className="text-slate-300 hover:text-[#32B260] transition-colors" title="Edit">
                                 <Pencil className="w-4 h-4" />
                               </button>
                               <button onClick={() => handleDeleteItem(item.id)} className="text-slate-300 hover:text-red-500 transition-colors" title="Delete">
@@ -466,7 +466,7 @@ export default function AdminMenuPage({ params }: { params: { restaurantId: stri
                             </div>
                           </div>
                           <p className="text-xs text-slate-500 line-clamp-2 mt-1 mb-2">{item.description}</p>
-                          <span className="font-black text-indigo-600 text-sm">{item.base_price.toFixed(2)} DH</span>
+                          <span className="font-black text-slate-900 text-sm">{item.base_price.toFixed(2)} DH</span>
                         </div>
                       </div>
                     ))}
@@ -517,7 +517,7 @@ export default function AdminMenuPage({ params }: { params: { restaurantId: stri
                       type="button"
                       onClick={() => imageUploadRef.current?.click()}
                       disabled={uploadingImage}
-                      className="flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition-colors disabled:opacity-60"
+                      className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#32B260] text-white rounded-xl text-sm font-bold hover:bg-[#2CA054] transition-colors disabled:opacity-60"
                     >
                       {uploadingImage ? (
                         <><Loader2 className="w-4 h-4 animate-spin" /> Uploading...</>
@@ -531,7 +531,7 @@ export default function AdminMenuPage({ params }: { params: { restaurantId: stri
                       value={editForm.image_url}
                       onChange={(e) => setEditForm({ ...editForm, image_url: e.target.value })}
                       placeholder="https://..."
-                      className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#32B260]"
                     />
                   </div>
                 </div>
@@ -545,7 +545,7 @@ export default function AdminMenuPage({ params }: { params: { restaurantId: stri
                   required
                   value={editForm.name}
                   onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#32B260]"
                 />
               </div>
 
@@ -556,7 +556,7 @@ export default function AdminMenuPage({ params }: { params: { restaurantId: stri
                   <select
                     value={editForm.category_id}
                     onChange={(e) => setEditForm({ ...editForm, category_id: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#32B260]"
                   >
                     <option value="">No category</option>
                     {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -570,7 +570,7 @@ export default function AdminMenuPage({ params }: { params: { restaurantId: stri
                     required
                     value={editForm.base_price}
                     onChange={(e) => setEditForm({ ...editForm, base_price: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#32B260]"
                   />
                 </div>
               </div>
@@ -582,7 +582,7 @@ export default function AdminMenuPage({ params }: { params: { restaurantId: stri
                   value={editForm.description}
                   onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
                   rows={3}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#32B260]"
                 />
               </div>
 
@@ -597,7 +597,7 @@ export default function AdminMenuPage({ params }: { params: { restaurantId: stri
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-indigo-700"
+                  className="px-5 py-2 bg-[#32B260] text-white rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-[#2CA054] transition-colors"
                 >
                   <Save className="w-4 h-4" /> Save Changes
                 </button>
