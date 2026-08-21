@@ -144,69 +144,71 @@ function PrepTimePopup({
           <button className="ptp-close" onClick={onClose}><X size={18} /></button>
         </div>
 
-        <div className="ptp-arc-wrap">
-          <svg viewBox="0 0 100 100" className="ptp-arc-svg">
-            <circle cx="50" cy="50" r={r} fill="none" stroke="#EAF6ED" strokeWidth="7" strokeLinecap="round"
-              strokeDasharray={circ} strokeDashoffset={0}
-              transform="rotate(-90 50 50)" />
-            <circle cx="50" cy="50" r={r} fill="none"
-              stroke={minutes ? '#32B260' : '#EAF6ED'} strokeWidth="7" strokeLinecap="round"
-              strokeDasharray={`${dash} ${circ}`}
-              transform="rotate(-90 50 50)"
-              style={{ transition: 'stroke-dasharray .4s cubic-bezier(.16,1,.3,1), stroke .3s' }}
-            />
-          </svg>
-          <div className="ptp-arc-center">
-            {minutes ? (
-              <>
-                <span className="ptp-arc-value">{minutes}</span>
-                <span className="ptp-arc-unit">min</span>
-              </>
-            ) : (
-              <span className="ptp-arc-placeholder">?</span>
-            )}
+        <div className="ptp-body">
+          <div className="ptp-arc-wrap">
+            <svg viewBox="0 0 100 100" className="ptp-arc-svg">
+              <circle cx="50" cy="50" r={r} fill="none" stroke="#EAF6ED" strokeWidth="7" strokeLinecap="round"
+                strokeDasharray={circ} strokeDashoffset={0}
+                transform="rotate(-90 50 50)" />
+              <circle cx="50" cy="50" r={r} fill="none"
+                stroke={minutes ? '#32B260' : '#EAF6ED'} strokeWidth="7" strokeLinecap="round"
+                strokeDasharray={`${dash} ${circ}`}
+                transform="rotate(-90 50 50)"
+                style={{ transition: 'stroke-dasharray .4s cubic-bezier(.16,1,.3,1), stroke .3s' }}
+              />
+            </svg>
+            <div className="ptp-arc-center">
+              {minutes ? (
+                <>
+                  <span className="ptp-arc-value">{minutes}</span>
+                  <span className="ptp-arc-unit">min</span>
+                </>
+              ) : (
+                <span className="ptp-arc-placeholder">?</span>
+              )}
+            </div>
           </div>
-        </div>
 
-        {readyTime && (
-          <div className="ptp-ready-preview">
-            <Clock size={14} className="ptp-ready-icon" />
-            Ready at <strong>{readyTime}</strong> · in {minutes} min
+          {readyTime && (
+            <div className="ptp-ready-preview">
+              <Clock size={14} className="ptp-ready-icon" />
+              Ready at <strong>{readyTime}</strong> · in {minutes} min
+            </div>
+          )}
+
+          <div className="ptp-preset-label">Quick Presets</div>
+          <div className="ptp-preset-grid">
+            {PREP_PRESETS.map(({ label, minutes: m, icon, hint }) => {
+              const isActive = !useCustom && selected === m;
+              return (
+                <button
+                  key={m}
+                  className={`ptp-tile ${isActive ? 'ptp-tile--active' : ''}`}
+                  onClick={() => { setSelected(m); setUseCustom(false); }}
+                >
+                  <span className="ptp-tile-icon">{icon}</span>
+                  <span className="ptp-tile-min">{label}</span>
+                  <span className="ptp-tile-hint">{hint}</span>
+                </button>
+              );
+            })}
           </div>
-        )}
 
-        <div className="ptp-preset-label">Quick Presets</div>
-        <div className="ptp-preset-grid">
-          {PREP_PRESETS.map(({ label, minutes: m, icon, hint }) => {
-            const isActive = !useCustom && selected === m;
-            return (
-              <button
-                key={m}
-                className={`ptp-tile ${isActive ? 'ptp-tile--active' : ''}`}
-                onClick={() => { setSelected(m); setUseCustom(false); }}
-              >
-                <span className="ptp-tile-icon">{icon}</span>
-                <span className="ptp-tile-min">{label}</span>
-                <span className="ptp-tile-hint">{hint}</span>
+          <div className="ptp-custom-wrap">
+            <span className="ptp-custom-label">Custom</span>
+            <div className={`ptp-stepper ${useCustom ? 'ptp-stepper--active' : ''}`}>
+              <button className="ptp-step"
+                onClick={() => { setCustom(v => Math.max(5, v - 5)); setUseCustom(true); }}>
+                <Minus size={16} />
               </button>
-            );
-          })}
-        </div>
-
-        <div className="ptp-custom-wrap">
-          <span className="ptp-custom-label">Custom</span>
-          <div className={`ptp-stepper ${useCustom ? 'ptp-stepper--active' : ''}`}>
-            <button className="ptp-step"
-              onClick={() => { setCustom(v => Math.max(5, v - 5)); setUseCustom(true); }}>
-              <Minus size={16} />
-            </button>
-            <span className="ptp-step-val" onClick={() => setUseCustom(true)}>
-              {custom}<span className="ptp-step-unit">min</span>
-            </span>
-            <button className="ptp-step"
-              onClick={() => { setCustom(v => Math.min(120, v + 5)); setUseCustom(true); }}>
-              <Plus size={16} />
-            </button>
+              <span className="ptp-step-val" onClick={() => setUseCustom(true)}>
+                {custom}<span className="ptp-step-unit">min</span>
+              </span>
+              <button className="ptp-step"
+                onClick={() => { setCustom(v => Math.min(120, v + 5)); setUseCustom(true); }}>
+                <Plus size={16} />
+              </button>
+            </div>
           </div>
         </div>
 
