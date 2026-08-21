@@ -35,6 +35,9 @@ export const metadata: Metadata = {
     statusBarStyle: 'default',
     title: 'Digital Menu',
   },
+  formatDetection: {
+    telephone: false,
+  },
 };
 
 export default function RootLayout({
